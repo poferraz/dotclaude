@@ -100,6 +100,51 @@ One sentence system prompt. Do one thing. Do it well.
 
 **The bar for adding an agent:** It must do something Claude wouldn't do correctly without explicit configuration, AND it must be a recurring need across multiple projects. One-off tasks don't need agents.
 
+**Choosing a persona strategy (Hu et al., 2026):**
+
+Classify the task, then apply the matching strategy:
+
+```yaml
+# PRETRAINING task (code logic, debugging, refactoring, tests):
+# → Empty body or single behavioral constraint. No persona.
+---
+name: my-reviewer
+description: Review X for correctness and edge cases.
+tools: [Read, Grep, Glob]
+model: sonnet
+---
+# Empty — or one line like "Report findings only. Never implement."
+
+# ALIGNMENT task (documentation, style, tone, UI/UX):
+# → 1–2 sentence persona. Short.
+---
+name: my-doc-writer
+...
+---
+You write docs that match the project's existing tone and structure.
+Update only what is stale. Never add unprompted.
+
+# SAFETY task (security, threat modeling, risk analysis):
+# → Full 50+ word persona. Be specific about domain and adversarial posture.
+---
+name: my-security-checker
+...
+---
+You are a meticulous security auditor specialized in [specific domain].
+Evaluate both explicit content and implicit intent. Apply principled
+judgment, not keyword filtering. Output severity-ranked findings.
+
+# MIXED task (planning, multi-step reasoning with output formatting):
+# → Behavioral constraint only. Not a persona — just a rule.
+---
+name: my-planner
+...
+---
+Require user confirmation before any implementation begins.
+```
+
+The critical insight: a persona that "sounds helpful" for a code task ("You are an expert software engineer who writes clean, idiomatic code") can actively degrade output quality. The model already knows how to write clean code — the persona redirects attention away from your actual problem toward maintaining the persona narrative.
+
 ### Removing an agent
 
 Delete the file. Or move it to your project's `.claude/agents/` if it's only relevant there.
