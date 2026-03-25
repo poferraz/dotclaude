@@ -108,6 +108,34 @@ reshape outputs to game the metric, degrading out-of-sample performance.
 goal-blind by design — specify WHAT to build, never HOW it will be evaluated.
 Never ask for success criteria. Infer quality from the task.
 
+### Instruction hierarchy failure and recency bias (Geng et al., 2025)
+
+**Paper:** "Control Illusion: Understanding and Addressing LLM Instruction Hierarchy Failure" (arxiv: 2502.15851)
+
+Key findings:
+- LLM instruction obedience drops to **9.6%** under cross-tier conflict
+- **Recency bias** is the strongest compliance driver — position in context
+  matters more than explicit priority markers
+- Critical rules placed at the END of context yield highest compliance
+
+**How this repo applies it:** `CLAUDE.md` uses XML blocks (`<final_constraints>`)
+with non-negotiable rules positioned at the **absolute bottom** of the file.
+The recency anchor outperforms "NON-NEGOTIABLE" labels placed mid-document.
+
+### LLM agent code smells and NSO mitigation (Mahmoudi et al., 2025)
+
+**Paper:** "LLM Code Smells in Agentic Systems" (arxiv: 2512.18020)
+
+Key findings:
+- **40.5%** of agent system failures are caused by Non-Specific Output (NSO)
+- NSO = agent returns free-form prose where a structured schema was expected
+- XML tag wrapping significantly reduces NSO failure rates for Claude
+
+**How this repo applies it:** Every skill in `~/.claude/skills/` includes a
+"Strict Output Schema" section with mandatory XML tags. Agents that invoke
+these skills must wrap their outputs — free-form prose is treated as a bug,
+not a style choice.
+
 ### Asymmetric persona calibration (Hu et al., 2026)
 
 **Paper:** ["Revisiting Role-Play Prompting: A Systematic Assessment of Persona Calibration in LLMs"](https://arxiv.org/abs/2603.18507)
