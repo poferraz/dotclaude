@@ -163,6 +163,27 @@ graph TD
 
 ---
 
+## Asymmetric Persona Strategy
+
+Agent system prompt bodies are calibrated by task type, based on Hu et al. (2026) research showing that persona effects are **asymmetric** — helpful for some tasks, harmful for others.
+
+| Task type | What it covers | Persona strategy | Why |
+|-----------|---------------|------------------|-----|
+| **Pretraining** | Code logic, debugging, refactoring, test writing | None (empty body) | Model already trained on these skills. Persona redirects attention away from the problem. |
+| **Alignment** | Documentation style, UI/UX aesthetics, tone matching | Short (1–2 sentences) | Behavioral calibration needed. Persona establishes the right prior. |
+| **Safety** | Security analysis, threat modeling, vulnerability detection | Full (50+ words) | +17.7% refusal rate vs. no persona. Explicit auditor framing activates adversarial reasoning. |
+| **Mixed** | Planning, multi-step reasoning | Minimum (behavioral constraint only) | Neutral effect. Constraint prevents over-confidence; full persona adds noise. |
+
+**Classification for new agents:** Ask which layer the task primarily lives in:
+- Does the model already know how to do this well from pretraining? → No persona.
+- Does the task require a specific tone, style, or aesthetic register? → Short persona.
+- Does the task involve evaluating risk, security, or safety-sensitive content? → Full persona.
+- Does the task mix reasoning with output formatting? → Behavioral constraint only.
+
+The key distinction: a **behavioral constraint** (e.g., "require user confirmation before implementing") tells the agent what NOT to do — this is neutral regardless of task type. A **persona** (e.g., "You are an expert reviewer") tells the agent who to BE — this is where the asymmetry kicks in.
+
+---
+
 ## Project-Level Overrides
 
 The global `~/.claude/` config is the baseline. Projects override by adding a `.claude/` directory to the project root:
