@@ -130,6 +130,78 @@ Every agent's system prompt body is calibrated by task type:
 
 ---
 
+## Paper 4: Instruction Hierarchy Failure and Recency Bias
+
+**"Control Illusion: Understanding and Addressing LLM Instruction Hierarchy Failure"**
+Geng, J., et al. (2025)
+[arxiv.org/abs/2502.15851](https://arxiv.org/abs/2502.15851)
+
+### What They Measured
+
+The authors investigated whether LLMs reliably follow a hierarchy of instructions — i.e., whether system-level rules (like a CLAUDE.md) actually take precedence over user-level requests when they conflict. They designed controlled conflict scenarios and measured obedience rates across priority tiers.
+
+### Key Findings
+
+| Finding | Result |
+|---------|--------|
+| Instruction obedience under cross-tier conflict | **9.6%** — near-random |
+| Most effective compliance mechanism | **Recency bias** (position in context) |
+| "IMPORTANT" / "NON-NEGOTIABLE" labels | Minimal effect vs. no label |
+| Rules placed at end of context | Highest compliance rate |
+
+The mechanism: LLMs do not have a robust learned hierarchy for "system > user > human" in the way the spec implies. What actually drives compliance is **recency** — the model's attention weights are highest at the end of the context window. A rule stated at position 1000 will be followed more reliably than the same rule at position 100, regardless of labels.
+
+This finding is sometimes called the "control illusion" — operators believe their system instructions govern behavior, but positional effects can override them.
+
+### How This Config Applies It
+
+**Decision 1: `<final_constraints>` block at the bottom of CLAUDE.md.**
+The four non-negotiable core behaviors (THINK BEFORE CODING, SIMPLICITY FIRST, SURGICAL CHANGES, GOAL-DRIVEN EXECUTION) are placed at the absolute end of the file, inside a named XML block. This is a direct application of the recency finding: these rules earn their position, not just their label.
+
+**Decision 2: XML demarcation.**
+Geng et al. found that structural delimiters improve rule salience. XML tags create a cognitive and tokenization boundary that `##` headers do not. The entire CLAUDE.md was converted from Markdown headers to XML blocks to maximize structural clarity.
+
+**Decision 3: Sections ordered by criticality (ascending).**
+Context earlier in the file (About Me, Architecture) is informational. The most important behavioral rules are closest to the end. The model reads the whole file, but the recency anchor is reserved for constraints that must not be overridden.
+
+---
+
+## Paper 5: LLM Code Smells in Agentic Systems
+
+**"LLM Code Smells: Identifying and Addressing Anti-Patterns in Agentic AI Systems"**
+Mahmoudi, H., et al. (2025)
+[arxiv.org/abs/2512.18020](https://arxiv.org/abs/2512.18020)
+
+### What They Measured
+
+The authors analyzed failure patterns in LLM-based agent systems — not failures from bad models, but architectural and prompting patterns that reliably produce bad outputs. They catalogued these as "code smells" by analogy to software engineering: patterns that aren't necessarily broken, but that reliably lead to problems at scale.
+
+### Key Findings
+
+| Smell | Failure Rate | Description |
+|-------|------------|-------------|
+| Non-Specific Output (NSO) | **40.5%** of failures | Agent returns free-form prose where a schema was required |
+| Undefined Model Multiplexing (UMM) | 22.1% | Multiple agents use different models without clear routing logic |
+| Missing Retry Logic | 18.3% | No fallback when tool calls fail or return unexpected structure |
+| Context Window Overflow | 12.4% | Agent context grows unbounded, degrading later responses |
+
+**NSO** is the dominant failure mode. It occurs when an agent is told to "report your findings" without a strict schema — and produces narrative prose that the calling system cannot parse or validate. The downstream agent that expected `<result>pass</result>` gets "I reviewed the code and it looks mostly good, though there are a few things worth noting..."
+
+**UMM** matters because different models have different output styles. Routing code review to Haiku and security review to Opus without explicit schema enforcement amplifies NSO — each model produces differently-structured prose.
+
+### How This Config Applies It
+
+**Decision 1: Strict Output Schema section in every skill.**
+All 5 first-party skills (`coding-standards`, `verification-loop`, `tdd-workflow`, `strategic-compact`, `continuous-learning-v2`) now include a mandatory "Strict Output Schema" section. Each schema uses XML tags — `<tool_output>`, `<verdict>`, `<report>` — that can be parsed programmatically. Free-form prose is named as a failure mode in the skill itself.
+
+**Decision 2: Schema tied to the NSO finding by citation.**
+Each schema section explicitly cites Mahmoudi et al. (2025). This serves two purposes: it prevents future editors from removing the schema thinking it's bureaucratic overhead, and it embeds the rationale where it's most actionable.
+
+**Decision 3: Minimal schemas, not comprehensive ones.**
+The schemas are deliberately narrow — only the fields that matter for downstream parsing. The Gloaguen finding (Paper 1) warns against bloated context files. A 20-line output schema that covers the critical fields beats a 200-line schema that covers everything.
+
+---
+
 ## What's Not Here
 
 Several papers influenced the general philosophy but didn't produce specific, implementable decisions:
