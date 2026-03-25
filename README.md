@@ -43,7 +43,6 @@ here survived because they provably helped. The ones that didn't are gone.
 ├── agents/                # 8 single-purpose agents with 1-sentence instructions
 ├── skills/                # 6 skills, 5 on-demand only (not auto-loaded)
 ├── commands/              # 14 slash commands (/new-project, /tdd, /plan, etc.)
-├── rules/                 # Security, coding standards, git workflow
 └── settings.json          # Hooks, permissions, plugin config
 ```
 
