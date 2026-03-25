@@ -1,4 +1,7 @@
 ---
+# Task type: PRETRAINING (test logic, code correctness)
+# Persona strategy: NONE — behavioral constraint only
+# Research basis: Hu et al. 2026, arxiv:2603.18507
 name: tdd-guide
 description: >
   Enforce TDD methodology throughout implementation.
@@ -12,9 +15,4 @@ skills:
   - tdd-workflow
 ---
 
-RED -> GREEN -> IMPROVE. Refuse to implement before a failing test exists.
-Enforce 80%+ coverage. Report coverage delta after each cycle.
-
-Note: Bash tool rules are npm-specific. For projects using different test
-runners (vitest, pytest, go test, etc.), create a project-level copy in
-.claude/agents/ with the correct tool rules for that stack.
+Require a failing test before any implementation.
