@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+
+  // ── MODEL ────────────────────────────────────────────────────────────────
+  // Default to sonnet. Agents override per-file via model: frontmatter.
+  // Planner uses opus; doc-updater uses haiku. All others use sonnet.
+  "model": "sonnet",
+
+  // ── OUTPUT STYLE ─────────────────────────────────────────────────────────
+  // "Explanatory" adds educational insights around code changes.
+  // Options: "Concise" | "Explanatory" | "Auto"
+  "outputStyle": "Explanatory",
+
+  // ── PERMISSIONS ───────────────────────────────────────────────────────────
+  // Default-deny. Only unlock what's needed. Projects can add via their own
+  // .claude/settings.json — global config sets the floor, not the ceiling.
+  "permissions": {
+    "allow": [
+      // Read-only tools: always safe
+      "Read",
+      "Glob",
+      "Grep",
+
+      // Git: safe for local operations
+      "Bash(git *)",
+
+      // Package management (no install without prompt)
+      "Bash(npm run *)",
+      "Bash(npx *)",
+
+      // Safe filesystem navigation and scaffolding
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(chmod *)",
+
+      // Allow fetching raw GitHub content for plugin installs
+      "WebFetch(domain:raw.githubusercontent.com)"
+    ],
+    "deny": [
+      // Irreversible destructive operations
+      "Bash(rm -rf *)",
+
+      // Never force-push (rewrites shared history)
+      "Bash(git push --force *)",
+
+      // Secrets — never read these
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(secrets/**)"
+    ]
+  },
+
+  // ── CONTEXT ───────────────────────────────────────────────────────────────
+  "includeGitInstructions": true,
+  "respectGitignore": true,
+  "autoMemoryEnabled": true,
+
+  // ── HOOKS ─────────────────────────────────────────────────────────────────
+  // All hooks call into context-mode (mksglu/context-mode) via its worker
+  // service. Install context-mode via the Claude Code plugin system, then
+  // update the paths below to match your CLAUDE_PLUGIN_ROOT.
+  //
+  // Replace $HOME/.claude/plugins/marketplaces/thedotmack/plugin with the
+  // actual path shown by: claude plugins list
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            // Install any pending plugin updates on session start
+            "type": "command",
+            "command": "node \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/smart-install.js\"",
+            "timeout": 300
+          },
+          {
+            // Start the context-mode worker (no-op if already running)
+            "type": "command",
+            "command": "node \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/bun-runner.js\" \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs\" start",
+            "timeout": 60
+          },
+          {
+            // Load session context index into system prompt
+            "type": "command",
+            "command": "node \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/bun-runner.js\" \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs\" hook claude-code context",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            // Ensure worker is running before each prompt
+            "type": "command",
+            "command": "node \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/bun-runner.js\" \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs\" start",
+            "timeout": 60
+          },
+          {
+            // Initialize session tracking for this prompt
+            "type": "command",
+            "command": "node \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/bun-runner.js\" \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs\" hook claude-code session-init",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/bun-runner.js\" \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs\" start",
+            "timeout": 60
+          },
+          {
+            // Capture observation into context-mode knowledge base
+            // This is how context-mode builds the semantic session index
+            "type": "command",
+            "command": "node \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/bun-runner.js\" \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs\" hook claude-code observation",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/bun-runner.js\" \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs\" start",
+            "timeout": 60
+          },
+          {
+            // Summarize session and save to context-mode knowledge base
+            "type": "command",
+            "command": "node \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/bun-runner.js\" \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs\" hook claude-code summarize",
+            "timeout": 120
+          },
+          {
+            // Mark session complete
+            "type": "command",
+            "command": "node \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/bun-runner.js\" \"$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs\" hook claude-code session-complete",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            // Lightweight local log — survives without context-mode
+            "type": "command",
+            "command": "echo \"Session ended at $(date)\" >> ~/.claude/sessions/session-log.txt"
+          }
+        ]
+      }
+    ]
+  },
+
+  // ── STATUS LINE ───────────────────────────────────────────────────────────
+  // Custom status line script. Copy statusline-command.sh from this repo
+  // to ~/.claude/statusline-command.sh and make it executable.
+  "statusLine": {
+    "type": "command",
+    "command": "bash $HOME/.claude/statusline-command.sh"
+  },
+
+  // ── PLUGINS ───────────────────────────────────────────────────────────────
+  // Install marketplaces first, then enable plugins here.
+  // See extraKnownMarketplaces for sources.
+  "enabledPlugins": {
+    "prompt-improver@severity1-marketplace": true,
+    "everything-claude-code@everything-claude-code": true,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true,
+    "context-mode@context-mode": true
+  },
+
+  // ── PLUGIN MARKETPLACES ───────────────────────────────────────────────────
+  // Add these to Claude Code so it knows where to fetch plugins.
+  // Claude Code only ships with one marketplace by default.
+  "extraKnownMarketplaces": {
+    "severity1-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "severity1/severity1-marketplace"
+      }
+    },
+    "everything-claude-code": {
+      "source": {
+        "source": "github",
+        "repo": "affaan-m/everything-claude-code"
+      }
+    },
+    "ui-ux-pro-max-skill": {
+      "source": {
+        "source": "github",
+        "repo": "nextlevelbuilder/ui-ux-pro-max-skill"
+      }
+    },
+    "context-mode": {
+      "source": {
+        "source": "github",
+        "repo": "mksglu/context-mode"
+      }
+    }
+  }
+}
