@@ -56,16 +56,16 @@ ALWAYS write tests first, then implement code to make tests pass.
 As a [role], I want to [action], so that [benefit]
 
 Example:
-As a user, I want to search for items by keyword,
-so that I can find relevant results without exact matches.
+As a user, I want to search for markets semantically,
+so that I can find relevant markets even without exact keywords.
 ```
 
 ### Step 2: Generate Test Cases
 For each user journey, create comprehensive test cases:
 
 ```typescript
-describe('Item Search', () => {
-  it('returns relevant items for query', async () => {
+describe('Semantic Search', () => {
+  it('returns relevant markets for query', async () => {
     // Test implementation
   })
 
@@ -73,11 +73,11 @@ describe('Item Search', () => {
     // Test edge case
   })
 
-  it('falls back to substring search when primary index unavailable', async () => {
+  it('falls back to substring search when Redis unavailable', async () => {
     // Test fallback behavior
   })
 
-  it('sorts results by relevance score', async () => {
+  it('sorts results by similarity score', async () => {
     // Test sorting logic
   })
 })
@@ -94,7 +94,7 @@ Write minimal code to make tests pass:
 
 ```typescript
 // Implementation guided by tests
-export async function searchItems(query: string) {
+export async function searchMarkets(query: string) {
   // Implementation here
 }
 ```
@@ -152,9 +152,9 @@ describe('Button Component', () => {
 import { NextRequest } from 'next/server'
 import { GET } from './route'
 
-describe('GET /api/items', () => {
-  it('returns items successfully', async () => {
-    const request = new NextRequest('http://localhost/api/items')
+describe('GET /api/markets', () => {
+  it('returns markets successfully', async () => {
+    const request = new NextRequest('http://localhost/api/markets')
     const response = await GET(request)
     const data = await response.json()
 
@@ -164,7 +164,7 @@ describe('GET /api/items', () => {
   })
 
   it('validates query parameters', async () => {
-    const request = new NextRequest('http://localhost/api/items?limit=invalid')
+    const request = new NextRequest('http://localhost/api/markets?limit=invalid')
     const response = await GET(request)
 
     expect(response.status).toBe(400)
@@ -172,7 +172,7 @@ describe('GET /api/items', () => {
 
   it('handles database errors gracefully', async () => {
     // Mock database failure
-    const request = new NextRequest('http://localhost/api/items')
+    const request = new NextRequest('http://localhost/api/markets')
     // Test error handling
   })
 })
@@ -182,31 +182,52 @@ describe('GET /api/items', () => {
 ```typescript
 import { test, expect } from '@playwright/test'
 
-test('user can search and filter items', async ({ page }) => {
-  await page.goto('/items')
+test('user can search and filter markets', async ({ page }) => {
+  // Navigate to markets page
+  await page.goto('/')
+  await page.click('a[href="/markets"]')
 
-  await expect(page.locator('h1')).toContainText('Items')
+  // Verify page loaded
+  await expect(page.locator('h1')).toContainText('Markets')
 
-  await page.fill('input[placeholder="Search items"]', 'typescript')
+  // Search for markets
+  await page.fill('input[placeholder="Search markets"]', 'election')
 
+  // Wait for debounce and results
   await page.waitForTimeout(600)
 
-  const results = page.locator('[data-testid="item-card"]')
+  // Verify search results displayed
+  const results = page.locator('[data-testid="market-card"]')
   await expect(results).toHaveCount(5, { timeout: 5000 })
 
+  // Verify results contain search term
+  const firstResult = results.first()
+  await expect(firstResult).toContainText('election', { ignoreCase: true })
+
+  // Filter by status
   await page.click('button:has-text("Active")')
+
+  // Verify filtered results
   await expect(results).toHaveCount(3)
 })
 
-test('user can create a new item', async ({ page }) => {
-  await page.goto('/dashboard')
+test('user can create a new market', async ({ page }) => {
+  // Login first
+  await page.goto('/creator-dashboard')
 
-  await page.fill('input[name="name"]', 'Test Item')
+  // Fill market creation form
+  await page.fill('input[name="name"]', 'Test Market')
   await page.fill('textarea[name="description"]', 'Test description')
+  await page.fill('input[name="endDate"]', '2025-12-31')
 
+  // Submit form
   await page.click('button[type="submit"]')
 
-  await expect(page.locator('text=Item created successfully')).toBeVisible()
+  // Verify success message
+  await expect(page.locator('text=Market created successfully')).toBeVisible()
+
+  // Verify redirect to market page
+  await expect(page).toHaveURL(/\/markets\/test-market/)
 })
 ```
 
@@ -217,30 +238,32 @@ src/
 ├── components/
 │   ├── Button/
 │   │   ├── Button.tsx
-│   │   └── Button.test.tsx
-│   └── ItemCard/
-│       ├── ItemCard.tsx
-│       └── ItemCard.test.tsx
+│   │   ├── Button.test.tsx          # Unit tests
+│   │   └── Button.stories.tsx       # Storybook
+│   └── MarketCard/
+│       ├── MarketCard.tsx
+│       └── MarketCard.test.tsx
 ├── app/
 │   └── api/
-│       └── items/
+│       └── markets/
 │           ├── route.ts
-│           └── route.test.ts
+│           └── route.test.ts         # Integration tests
 └── e2e/
-    ├── items.spec.ts
+    ├── markets.spec.ts               # E2E tests
+    ├── trading.spec.ts
     └── auth.spec.ts
 ```
 
 ## Mocking External Services
 
-### Database Mock
+### Supabase Mock
 ```typescript
-jest.mock('@/lib/db', () => ({
-  db: {
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
     from: jest.fn(() => ({
       select: jest.fn(() => ({
         eq: jest.fn(() => Promise.resolve({
-          data: [{ id: 1, name: 'Test Item' }],
+          data: [{ id: 1, name: 'Test Market' }],
           error: null
         }))
       }))
@@ -249,22 +272,33 @@ jest.mock('@/lib/db', () => ({
 }))
 ```
 
-### Cache Mock
+### Redis Mock
 ```typescript
-jest.mock('@/lib/cache', () => ({
-  searchByVector: jest.fn(() => Promise.resolve([
-    { slug: 'test-item', similarity_score: 0.95 }
+jest.mock('@/lib/redis', () => ({
+  searchMarketsByVector: jest.fn(() => Promise.resolve([
+    { slug: 'test-market', similarity_score: 0.95 }
   ])),
-  checkHealth: jest.fn(() => Promise.resolve({ connected: true }))
+  checkRedisHealth: jest.fn(() => Promise.resolve({ connected: true }))
+}))
+```
+
+### OpenAI Mock
+```typescript
+jest.mock('@/lib/openai', () => ({
+  generateEmbedding: jest.fn(() => Promise.resolve(
+    new Array(1536).fill(0.1) // Mock 1536-dim embedding
+  ))
 }))
 ```
 
 ## Test Coverage Verification
 
+### Run Coverage Report
 ```bash
 npm run test:coverage
 ```
 
+### Coverage Thresholds
 ```json
 {
   "jest": {
@@ -284,50 +318,65 @@ npm run test:coverage
 
 ### ❌ WRONG: Testing Implementation Details
 ```typescript
+// Don't test internal state
 expect(component.state.count).toBe(5)
 ```
 
 ### ✅ CORRECT: Test User-Visible Behavior
 ```typescript
+// Test what users see
 expect(screen.getByText('Count: 5')).toBeInTheDocument()
 ```
 
 ### ❌ WRONG: Brittle Selectors
 ```typescript
+// Breaks easily
 await page.click('.css-class-xyz')
 ```
 
 ### ✅ CORRECT: Semantic Selectors
 ```typescript
+// Resilient to changes
 await page.click('button:has-text("Submit")')
 await page.click('[data-testid="submit-button"]')
 ```
 
 ### ❌ WRONG: No Test Isolation
 ```typescript
-test('creates item', () => { /* ... */ })
-test('updates same item', () => { /* depends on previous test */ })
+// Tests depend on each other
+test('creates user', () => { /* ... */ })
+test('updates same user', () => { /* depends on previous test */ })
 ```
 
 ### ✅ CORRECT: Independent Tests
 ```typescript
-test('creates item', () => {
-  const item = createTestItem()
+// Each test sets up its own data
+test('creates user', () => {
+  const user = createTestUser()
   // Test logic
 })
 
-test('updates item', () => {
-  const item = createTestItem()
+test('updates user', () => {
+  const user = createTestUser()
   // Update logic
 })
 ```
 
 ## Continuous Testing
 
+### Watch Mode During Development
 ```bash
 npm test -- --watch
+# Tests run automatically on file changes
 ```
 
+### Pre-Commit Hook
+```bash
+# Runs before every commit
+npm test && npm run lint
+```
+
+### CI/CD Integration
 ```yaml
 # GitHub Actions
 - name: Run Tests
@@ -338,16 +387,16 @@ npm test -- --watch
 
 ## Best Practices
 
-1. **Write Tests First** — Always TDD
-2. **One Assert Per Test** — Focus on single behavior
-3. **Descriptive Test Names** — Explain what's tested
-4. **Arrange-Act-Assert** — Clear test structure
-5. **Mock External Dependencies** — Isolate unit tests
-6. **Test Edge Cases** — Null, undefined, empty, large
-7. **Test Error Paths** — Not just happy paths
-8. **Keep Tests Fast** — Unit tests < 50ms each
-9. **Clean Up After Tests** — No side effects
-10. **Review Coverage Reports** — Identify gaps
+1. **Write Tests First** - Always TDD
+2. **One Assert Per Test** - Focus on single behavior
+3. **Descriptive Test Names** - Explain what's tested
+4. **Arrange-Act-Assert** - Clear test structure
+5. **Mock External Dependencies** - Isolate unit tests
+6. **Test Edge Cases** - Null, undefined, empty, large
+7. **Test Error Paths** - Not just happy paths
+8. **Keep Tests Fast** - Unit tests < 50ms each
+9. **Clean Up After Tests** - No side effects
+10. **Review Coverage Reports** - Identify gaps
 
 ## Success Metrics
 
@@ -356,7 +405,24 @@ npm test -- --watch
 - No skipped or disabled tests
 - Fast test execution (< 30s for unit tests)
 - E2E tests cover critical user flows
+- Tests catch bugs before production
 
 ---
 
 **Remember**: Tests are not optional. They are the safety net that enables confident refactoring, rapid development, and production reliability.
+
+## Strict Output Schema
+
+When reporting TDD cycle status, wrap output in this structure. Free-form prose
+is a known agent failure mode (Non-Specific Output — Mahmoudi et al., 2025).
+
+<tool_output>
+  <skill>tdd-workflow</skill>
+  <cycle>
+    <phase>[RED|GREEN|REFACTOR]</phase>
+    <tests_written>N</tests_written>
+    <tests_passing>N</tests_passing>
+    <coverage>N%</coverage>
+  </cycle>
+  <verdict>[CYCLE COMPLETE|BLOCKED — reason]</verdict>
+</tool_output>

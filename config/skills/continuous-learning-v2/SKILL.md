@@ -360,6 +360,21 @@ v2.1 is fully compatible with v2.0 and v1:
 - Homunculus - Community project that inspired the v2 instinct-based architecture (atomic observations, confidence scoring, instinct evolution pipeline)
 - [The Longform Guide](https://x.com/affaanmustafa/status/2014040193557471352) - Continuous learning section
 
+## Strict Output Schema
+
+When reporting instinct analysis or learning summaries, use this structure.
+Free-form prose is a known agent failure mode (Non-Specific Output — Mahmoudi et al., 2025).
+
+<tool_output>
+  <skill>continuous-learning-v2</skill>
+  <instincts_found>N</instincts_found>
+  <scope>[project|global]</scope>
+  <top_instincts>
+    <instinct id="[id]" confidence="[0.0-1.0]">[one-line description]</instinct>
+  </top_instincts>
+  <action>[SAVED|UPDATED|PROMOTED|NO_CHANGE]</action>
+</tool_output>
+
 ---
 
 *Instinct-based learning: teaching Claude your patterns, one project at a time.*
