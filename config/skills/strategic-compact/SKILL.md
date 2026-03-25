@@ -96,6 +96,18 @@ Understanding what persists helps you compact with confidence:
 5. **Write before compacting** — Save important context to files or memory before compacting
 6. **Use `/compact` with a summary** — Add a custom message: `/compact Focus on implementing auth middleware next`
 
+## Strict Output Schema
+
+When reporting compaction status or recommendations, use this structure.
+Free-form prose is a known agent failure mode (Non-Specific Output — Mahmoudi et al., 2025).
+
+<tool_output>
+  <skill>strategic-compact</skill>
+  <recommendation>[COMPACT NOW|HOLD|OPTIONAL]</recommendation>
+  <reason>[phase transition or threshold reason]</reason>
+  <tool_calls_so_far>N</tool_calls_so_far>
+</tool_output>
+
 ## Related
 
 - [The Longform Guide](https://x.com/affaanmustafa/status/2014040193557471352) — Token optimization section

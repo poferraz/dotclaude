@@ -124,3 +124,22 @@ Run: /verify
 
 This skill complements PostToolUse hooks but provides deeper verification.
 Hooks catch issues immediately; this skill provides comprehensive review.
+
+## Strict Output Schema
+
+All verification reports MUST use this XML wrapper. Unstructured prose reports
+are a known agent failure mode (Non-Specific Output — Mahmoudi et al., 2025).
+
+<tool_output>
+  <skill>verification-loop</skill>
+  <report>
+    <build>[PASS|FAIL]</build>
+    <types>[PASS|FAIL] (N errors)</types>
+    <lint>[PASS|FAIL] (N warnings)</lint>
+    <tests>[PASS|FAIL] (N/M passed, X% coverage)</tests>
+    <security>[PASS|FAIL] (N issues)</security>
+    <diff>N files changed</diff>
+  </report>
+  <verdict>[READY|NOT READY] for PR</verdict>
+  <issues>[list any blocking issues here, or "none"]</issues>
+</tool_output>

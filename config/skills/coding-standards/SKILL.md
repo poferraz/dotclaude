@@ -54,3 +54,17 @@ user-invocable: true
 
 Conventional commits: type: description
 Types: feat, fix, refactor, docs, test, chore, perf, ci
+
+## Strict Output Schema
+
+When reporting a code review or standards audit using this skill, wrap all
+output in the following structure. Free-form prose without this schema is a
+known agent failure mode (Non-Specific Output — Mahmoudi et al., 2025).
+
+<tool_output>
+  <skill>coding-standards</skill>
+  <violations>
+    <item severity="[high|medium|low]">[violation description + file:line]</item>
+  </violations>
+  <verdict>[PASS | FAIL — N violations found]</verdict>
+</tool_output>
