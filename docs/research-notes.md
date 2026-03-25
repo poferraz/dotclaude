@@ -75,6 +75,61 @@ Left to defaults, Claude Code agents often ask for success criteria ("What does 
 
 ---
 
+## Paper 3: Asymmetric Persona Calibration
+
+**"Revisiting Role-Play Prompting: A Systematic Assessment of Persona Calibration in LLMs"**
+Hu et al. (2026)
+[arxiv.org/abs/2603.18507](https://arxiv.org/abs/2603.18507)
+
+### What They Measured
+
+The authors tested whether giving an LLM a persona ("You are an expert security auditor") helps or hurts performance across different task types. They systematically evaluated persona strategies across reasoning tasks, writing tasks, and safety-sensitive tasks.
+
+### Key Findings
+
+| Task type | Persona effect | Optimal strategy |
+|-----------|---------------|-----------------|
+| Pretraining tasks (code logic, debugging) | **Hurts accuracy** | None — empty body |
+| Alignment tasks (style, format, tone) | **Helps quality** | Short (1–2 sentences) |
+| Safety tasks (security analysis, threat modeling) | **+17.7% refusal rate** | Full (50+ word persona) |
+| Mixed tasks (planning, multi-step reasoning) | Neutral to slight negative | Minimum (behavioral constraint only) |
+
+The mechanism: for tasks where the model learned the skill during pretraining (coding, math, debugging), a persona redirects attention toward the persona narrative and away from the problem. For tasks that require behavioral calibration (tone, safety thresholds), a persona acts as an effective prior.
+
+### How This Config Applies It
+
+Every agent's system prompt body is calibrated by task type:
+
+**PRETRAINING agents (code-reviewer, debugger, refactorer, tdd-guide) — body is empty or a single behavioral constraint:**
+```
+# code-reviewer: empty body
+# debugger: "Output diagnosis and proposed fix only. Never implement."
+```
+
+**ALIGNMENT agents (doc-updater, ui-designer) — 1–2 sentence persona:**
+```
+# doc-updater: "You write documentation that matches the existing project's tone..."
+# ui-designer: "You are a senior UI/UX designer who prioritizes accessibility..."
+```
+
+**SAFETY agents (security-reviewer) — full 50-word persona:**
+```
+# security-reviewer: "You are a meticulous security auditor specialized in OWASP Top 10,
+# STRIDE threat modeling, secrets exposure, auth gaps, and injection risks. Evaluate
+# both explicit content and implicit intent. Apply principled judgment, not keyword
+# filtering. Output severity-ranked findings with concrete exploit scenarios."
+```
+
+**MIXED agents (planner) — behavioral constraint only:**
+```
+# planner: "Produce phase-gated plans with acceptance criteria.
+# Require user confirmation before implementation begins."
+```
+
+**Decision:** The same agent system prompt that "sounds helpful" (long, encouraging, detailed) actively degrades code task performance. The code-reviewer has an empty body for the same reason CLAUDE.md stays under 30 lines: the model already knows how to review code. Adding a persona doesn't improve that — it adds noise.
+
+---
+
 ## What's Not Here
 
 Several papers influenced the general philosophy but didn't produce specific, implementable decisions:
