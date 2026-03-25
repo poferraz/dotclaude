@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-2.1.0%2B-blue)](https://claude.ai/code)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/yourusername/dotclaude/pulls)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 A curated `~/.claude/` configuration that combines the best open-source tools
 from the Claude Code ecosystem into a single coherent setup. The key insight
@@ -20,19 +20,18 @@ tokens or it doesn't ship.
 Coding agents perform measurably worse with bloated context files. When the
 context window fills with generic instructions, framework boilerplate, and
 catch-all rules, the model's attention is diluted before it ever sees your
-actual problem. This isn't speculation — it's a consistent pattern observed
-across published evaluations of LLM coding assistance and validated in
-Anthropic's own guidance on effective system prompts.
+actual problem. Research now confirms what practitioners suspected: more
+context is not better context.
 
-Most "awesome Claude Code" setups operate in the opposite direction: they
-add everything. Mega-agents with 20 tools. Skills with 500 lines of generic
-advice. Commands for every conceivable workflow. The result is a system that
-impresses in screenshots and degrades in daily use.
+Most "awesome Claude Code" setups operate in the opposite direction — they add
+everything. Mega-agents with 20 tools. Skills with 500 lines of generic advice.
+Commands for every conceivable workflow. The result is a system that impresses
+in screenshots and degrades in daily use.
 
-This configuration was born from real work — retail management tooling, PWA
-development, bakery production planning — not theoretical best practices. It
-was audited, stripped down, rebuilt leaner, and audited again. The agents you
-see here survived because they provably helped. The ones that didn't are gone.
+This configuration was born from real work: retail management tooling, PWA
+development, bakery production planning. Not theoretical best practices. It was
+audited, stripped down, rebuilt leaner, and audited again. The agents you see
+here survived because they provably helped. The ones that didn't are gone.
 
 ---
 
@@ -40,215 +39,188 @@ see here survived because they provably helped. The ones that didn't are gone.
 
 ```
 ~/.claude/
-├── CLAUDE.md               # Core principles: think before coding, simplicity first,
-│                           # surgical changes, goal-driven execution
-├── settings.json           # Hardened permissions, lifecycle hooks, plugin registry
-├── mcp.json                # MCP server config (GitHub, Google Drive; env-var only)
-│
-├── agents/                 # 8 lean, single-responsibility subagents
-│   ├── code-reviewer.md    # SOLID/security/YAGNI review via git diff
-│   ├── debugger.md         # Root-cause diagnosis only — never implements
-│   ├── doc-updater.md      # Syncs docs after API/interface changes
-│   ├── planner.md          # Phase-wise gated plans with acceptance criteria
-│   ├── refactorer.md       # Structural cleanup with test-passing gates
-│   ├── security-reviewer.md # Injection, auth gaps, secrets, data validation
-│   ├── tdd-guide.md        # RED→GREEN→IMPROVE enforcement with coverage delta
-│   └── ui-designer.md      # 2026-style React/Tailwind components
-│
-├── skills/                 # Preloaded knowledge packs for agents
-│   ├── coding-standards/   # Language-agnostic quality rules (naming, structure,
-│   │                       # error handling, immutability, code smells)
-│   ├── continuous-learning-v2/  # Instinct-based learning from session patterns
-│   ├── strategic-compact/  # Context compaction triggers at logical intervals
-│   ├── tdd-workflow/       # TDD methodology loaded by the tdd-guide agent
-│   ├── ui-ux-pro-max/      # 67 styles, 96 palettes, 57 font pairings
-│   └── verification-loop/  # Systematic verification after multi-step changes
-│
-├── commands/               # Slash commands for repeatable workflows
-│   ├── audit-repo.md       # Full GitHub repo audit
-│   ├── build-fix.md        # Build error triage and resolution
-│   ├── checkpoint.md       # Save session state before risky operations
-│   ├── code-review.md      # Trigger code-reviewer agent
-│   ├── evolve.md           # Analyze instincts and suggest refinements
-│   ├── full-review.md      # Multi-agent comprehensive review orchestration
-│   ├── full-stack-feature.md  # End-to-end feature implementation workflow
-│   ├── instinct-status.md  # Show learned patterns with confidence scores
-│   ├── learn.md            # Extract reusable patterns from the session
-│   ├── new-project.md      # Bootstrap a new project with Claude Code config
-│   ├── plan.md             # Restate requirements and build a gated plan
-│   ├── pr-enhance.md       # PR quality and description enhancement
-│   ├── tdd.md              # Enforce TDD throughout a feature
-│   └── verify.md           # Run verification loop after changes
-│
-└── mcp.json                # GitHub + Google Drive (Supabase/Playwright disabled)
+├── CLAUDE.md              # Global context (under 30 lines, research-optimized)
+├── agents/                # 8 single-purpose agents with 1-sentence instructions
+├── skills/                # 6 skills, 5 on-demand only (not auto-loaded)
+├── commands/              # 14 slash commands (/new-project, /tdd, /plan, etc.)
+├── rules/                 # Security, coding standards, git workflow
+└── settings.json          # Hooks, permissions, plugin config
 ```
 
----
-
-## Architecture Principles
-
-This setup follows a three-tier orchestration model:
-
-```
-Command (/plan) → Agent (planner) → Skill (loaded knowledge)
-```
-
-- **Commands** are slash-invokable entry points for repeatable workflows
-- **Agents** are single-responsibility subprocesses with scoped tools and
-  explicit model selection (Opus for planning, Sonnet for everything else)
-- **Skills** are knowledge packs — either preloaded via `skills:` frontmatter
-  or invoked on-demand via the `Skill` tool
-
-No god agents. No agents that spawn subagents via bash. No skills with 500 lines of boilerplate.
+**Command → Agent → Skill.** A command (`/plan`) launches a scoped subagent
+(`planner`) that optionally loads a knowledge pack (`tdd-workflow`) via its
+`skills:` frontmatter. Agents invoke other agents via the Agent tool — never
+via bash. Skills are knowledge, not code: they load context, not behavior.
 
 ---
 
-## Hooks Architecture
-
-The `settings.json` runs a lifecycle hook system on four events:
-
-| Event | Purpose |
-|---|---|
-| `SessionStart` | Install plugins, start context-mode worker, load session context |
-| `UserPromptSubmit` | Prompt evaluation (via prompt-improver), session initialization |
-| `PostToolUse` | Capture observations into the context-mode knowledge base |
-| `Stop` | Summarize session, mark complete, log to `sessions/session-log.txt` |
-
-All hooks call into the [context-mode](https://github.com/mksglu/context-mode)
-worker service, which maintains a semantic session index and prevents raw tool
-output from flooding the context window.
-
----
-
-## Permission Model
-
-`settings.json` uses an explicit allow/deny approach — permissions are off by
-default and only unlocked when justified:
-
-**Allowed by default:**
-`Read`, `Glob`, `Grep`, `Bash(git *)`, `Bash(npm run *)`, `Bash(npx *)`,
-`Bash(ls *)`, `Bash(mkdir *)`, `Bash(cp *)`, `Bash(chmod *)`,
-`WebFetch(raw.githubusercontent.com)`
-
-**Permanently denied:**
-`Bash(rm -rf *)`, `Bash(git push --force *)`, `Read(.env)`, `Read(.env.*)`,
-`Read(secrets/**)`
-
-Projects override via their own `.claude/settings.json` — the global config
-sets the floor, not the ceiling.
-
----
-
-## MCP Servers
-
-| Server | Source | Notes |
-|---|---|---|
-| `github` | `@modelcontextprotocol/server-github` | Requires `GITHUB_TOKEN` env var |
-| `google-drive` | `workspace-mcp` | Requires OAuth env vars |
-| `supabase` | `supabase-mcp-server` | Disabled globally; enable per-project |
-| `playwright` | `@anthropic-ai/mcp-server-playwright` | Disabled globally; enable per-project |
-
-No credentials in config files. All secrets via environment variables only.
-
----
-
-## Getting Started
-
-**Prerequisites:** Claude Code 2.1.0+, Node.js 18+
+## Quick Start
 
 ```bash
-# Back up your existing config first
-cp -r ~/.claude ~/.claude.bak
-
-# Clone
+# 1. Clone
 git clone https://github.com/yourusername/dotclaude.git
 cd dotclaude
 
-# Copy files — selective merge recommended over wholesale overwrite
-cp CLAUDE.md ~/.claude/CLAUDE.md
-cp settings.json ~/.claude/settings.json    # Review first — your hooks will differ
-cp mcp.json ~/.claude/mcp.json             # Add your own servers
-cp -r agents/* ~/.claude/agents/
-cp -r commands/* ~/.claude/commands/
-cp -r skills/* ~/.claude/skills/
+# 2. Run the install script
+#    (backs up your existing ~/.claude/ automatically)
+bash scripts/install.sh
+
+# 3. Merge settings manually
+#    Review config/settings.json and add hook/plugin config to ~/.claude/settings.json
+#    (the script will tell you exactly what to do)
+
+# 4. Verify
+claude --version
+claude doctor
 ```
 
-> **Note:** `settings.json` contains absolute paths in the hook commands
-> (pointing to my machine). You'll need to update these for your environment,
-> or install [context-mode](https://github.com/mksglu/context-mode) via the
-> Claude Code plugin system.
-
-### Installing Plugins
-
-The following plugin marketplaces are referenced in `settings.json`:
-
-```bash
-# Install via Claude Code's plugin system
-# Add to settings.json > extraKnownMarketplaces, then enable in enabledPlugins
-```
-
-| Plugin | Marketplace Repo | What It Adds |
-|---|---|---|
-| `everything-claude-code` | `affaan-m/everything-claude-code` | 100+ agents, skills, patterns |
-| `context-mode` | `mksglu/context-mode` | Context window protection |
-| `prompt-improver` | `severity1/severity1-marketplace` | Prompt evaluation hooks |
-| `ui-ux-pro-max` | `nextlevelbuilder/ui-ux-pro-max-skill` | UI design intelligence |
+> The install script backs up your existing `~/.claude/` before touching anything,
+> copies config files, and prints next steps for plugin installation.
+> It does not transmit any data. See [SECURITY.md](SECURITY.md).
 
 ---
 
-## How to Adapt This
+## The Research Behind It
 
-**Swap the model defaults** — edit `model:` in any agent frontmatter. Haiku
-for cheap review passes, Opus for critical planning.
+### Context files can hurt you (Gloaguen et al., 2026)
 
-**Override globally-denied commands per-project** — add a project-level
-`.claude/settings.json` with a `permissions.allow` that re-opens what you need.
+**Paper:** ["Evaluating AGENTS.md: Are Repository-Level Context Files Helpful?"](https://arxiv.org/abs/2602.11988)
 
-**Add stack-specific agents** — copy `debugger.md` to your project's
-`.claude/agents/debugger.md` and change the Bash tool rules from
-`npm test *` to your runner (`pytest *`, `go test ./...`, etc.).
+Key findings:
+- LLM-generated context files **reduced task success in 5 of 8 settings**
+- Increased API cost by **20–23%**
+- Increased reasoning tokens by **14–22%**
+- Human-written files performed better, but only when they contained
+  *non-obvious* requirements the agent couldn't discover itself
 
-**Trim the commands** — most users only need 4-5 commands regularly. The rest
-are there because they proved useful at least once. Delete what you don't use.
+**How this repo applies it:** `CLAUDE.md` is under 30 lines and contains only
+behavioral principles that override default model behavior. No framework
+boilerplate. No re-teaching what the model already knows. No comprehensive
+style guides the model could infer from the codebase.
+
+### Goal-blind prompting (Cao, Jiang, Xu, 2026)
+
+**Paper:** "Seeing the Goal, Missing the Truth"
+
+Key finding: Telling an LLM how its output will be evaluated causes it to
+reshape outputs to game the metric, degrading out-of-sample performance.
+
+**How this repo applies it:** The prompting philosophy in `CLAUDE.md` is
+goal-blind by design — specify WHAT to build, never HOW it will be evaluated.
+Never ask for success criteria. Infer quality from the task.
 
 ---
 
-## Attribution
+## Built On The Shoulders Of Giants
 
-I assembled this from the open-source community. I wrote the integration
-logic, the CLAUDE.md philosophy, and adapted components for my use cases.
-Everything else has a source:
+| Project | What I Used | Credit |
+|---------|-------------|--------|
+| [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | Agents, skills, hooks, commands, rules, and the plugin architecture. The foundation this setup started from. | @affaan-m |
+| [claude-code-prompt-improver](https://github.com/severity1/claude-code-prompt-improver) | Prompt evaluation plugin that intercepts vague prompts before execution | @severity1 |
+| [claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice) | Reference patterns for Claude Code workflows and conventions | @shanraisshan |
+| [context-mode](https://github.com/thedotmack) | Session memory and observation system (context-mode plugin) | @thedotmack |
+| [beads](https://github.com/steveyegge/beads) | Structured task tracking for coding agents. Recommended as the on-demand memory layer. | @steveyegge |
+| [stop-slop](https://github.com/hardikpandya/stop-slop) | Writing quality patterns adapted for skill output | @hardikpandya |
+| [AGENTS.md spec](https://agents.md) | The open standard for guiding coding agents | AGENTS.md community |
+| [Anthropic Claude Code docs](https://docs.anthropic.com/en/docs/claude-code) | Official documentation for CLAUDE.md, hooks, agents, skills, commands | Anthropic |
 
-| Component | Source | Author |
-|---|---|---|
-| Plugin marketplace system | [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | [@affaan-m](https://github.com/affaan-m) |
-| Context window protection | [context-mode](https://github.com/mksglu/context-mode) | [@mksglu](https://github.com/mksglu) |
-| UI/UX skill system | [ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | [@nextlevelbuilder](https://github.com/nextlevelbuilder) |
-| Prompt evaluation hooks | [severity1-marketplace](https://github.com/severity1/severity1-marketplace) | [@severity1](https://github.com/severity1) |
-| Continuous learning system | [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | [@affaan-m](https://github.com/affaan-m) |
-| Structural inspiration | [beads](https://github.com/steveyegge/beads) | [@steveyegge](https://github.com/steveyegge) |
-| Agent workflow patterns | [wshobson/agents](https://github.com/wshobson/agents) | [@wshobson](https://github.com/wshobson) |
+This repository is an assembly, not an invention. Every tool, pattern, and
+architecture decision traces back to the work of the developers and researchers
+listed above. I built this by installing their tools, testing them on real
+projects, reading the research, and cutting everything that didn't earn its
+place. If you find this useful, **star THEIR repos first.**
 
-If something in here looks familiar and isn't credited, open an issue — I want
-to get this right.
+---
+
+## Philosophy
+
+- **Every token in your context window should earn its place.** If a rule
+  describes behavior Claude would exhibit anyway from training, delete it.
+- **Trust the model's training — don't re-teach it what it already knows.**
+  A 30-line CLAUDE.md that overrides defaults beats a 300-line one that
+  restates them.
+- **On-demand over auto-loaded, always.** Skills and context that load only
+  when invoked don't cost tokens on unrelated tasks.
+
+---
+
+## Agents
+
+| Agent | Purpose | Model |
+|-------|---------|-------|
+| `code-reviewer` | Review changes via `git diff` — SOLID, security, YAGNI violations | sonnet |
+| `debugger` | Trace bugs to root cause and propose minimal fix. Never implements. | sonnet |
+| `doc-updater` | Sync documentation after public API or interface changes | sonnet |
+| `planner` | Phase-wise gated plans with deliverables and acceptance criteria | opus |
+| `refactorer` | Structural cleanup without behavior change. Requires tests before and after. | sonnet |
+| `security-reviewer` | Injection, auth gaps, secrets exposure, data validation | sonnet |
+| `tdd-guide` | Enforce RED→GREEN→IMPROVE. Report coverage delta each cycle. | sonnet |
+| `ui-designer` | 2026-style React/Tailwind components with preloaded design system | sonnet |
+
+All agents: single responsibility, scoped tool list, one-sentence system prompt.
+The planner uses Opus because planning quality compounds across the entire task.
+
+---
+
+## Skills
+
+| Skill | Purpose | Loading |
+|-------|---------|---------|
+| `coding-standards` | Language-agnostic quality rules: naming, structure, error handling, immutability | On-demand |
+| `continuous-learning-v2` | Instinct-based learning from session patterns | On-demand |
+| `strategic-compact` | Context compaction triggers at logical session intervals | On-demand |
+| `tdd-workflow` | TDD methodology reference loaded by the `tdd-guide` agent | **Agent-preloaded** |
+| `ui-ux-pro-max` | 67 styles, 96 palettes, 57 font pairings — loaded by `ui-designer` | On-demand |
+| `verification-loop` | Systematic verification checklist after multi-step changes | On-demand |
+
+5 of 6 skills are on-demand by design. Only `tdd-workflow` is preloaded — and
+only by the agent that needs it, not at session start.
+
+---
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/audit-repo` | Full GitHub repository audit |
+| `/build-fix` | Triage and resolve build errors |
+| `/checkpoint` | Save session state before risky operations |
+| `/code-review` | Trigger the `code-reviewer` agent on current changes |
+| `/evolve` | Analyze learned instincts and suggest refinements |
+| `/full-review` | Multi-agent comprehensive review (code + security + docs) |
+| `/full-stack-feature` | Orchestrate end-to-end feature implementation |
+| `/instinct-status` | Show learned patterns with confidence scores |
+| `/learn` | Extract reusable patterns from the current session |
+| `/new-project` | Bootstrap a new project with minimal Claude Code config |
+| `/plan` | Restate requirements and build a gated implementation plan |
+| `/pr-enhance` | Improve PR quality and generate structured description |
+| `/tdd` | Enforce TDD methodology throughout a feature |
+| `/verify` | Run verification loop after completing a change |
+
+---
+
+## Customization
+
+**Different stack?** Copy any agent to your project's `.claude/agents/` and
+update the Bash tool rules. The `debugger` defaults to `npm test` — change it
+to `pytest *`, `go test ./...`, or whatever your runner is.
+
+**Project-level CLAUDE.md?** The `/new-project` command generates one — 5 to
+10 lines maximum. The research (Gloaguen et al.) shows that comprehensive
+guides don't help. Only include what the agent cannot discover from the code.
+
+**Want fewer agents?** Start with `planner`, `debugger`, and `code-reviewer`.
+Add others only when you notice a recurring gap.
 
 ---
 
 ## Contributing
 
-This is a living configuration. If you've found a better way to handle
-something that's already here — a leaner agent, a tighter permission model,
-a hook pattern that works more reliably — PRs are welcome.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-What I'm not looking for:
-- Generic agents that could apply to anything
-- Skills that duplicate what's already in everything-claude-code
-- Commands that would be better as a one-line alias
-
-What I am looking for:
-- Evidence-backed changes (show me what it replaced and why it's better)
-- Attribution for anything borrowed
-- Lean additions that earn their tokens
+The bar for adding new content is high by design: it must contain non-obvious
+information that Claude cannot discover from its training or existing repo
+files. Generic advice doesn't clear the bar. Evidence does.
 
 ---
 
