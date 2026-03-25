@@ -41,8 +41,8 @@ here survived because they provably helped. The ones that didn't are gone.
 ~/.claude/
 ├── CLAUDE.md              # Global context (under 30 lines, research-optimized)
 ├── agents/                # 8 single-purpose agents with 1-sentence instructions
-├── skills/                # 6 skills, 5 on-demand only (not auto-loaded)
-├── commands/              # 14 slash commands (/new-project, /tdd, /plan, etc.)
+├── skills/                # 6 skills + gstack browser (5 on-demand, 1 agent-preloaded)
+├── commands/              # 15 slash commands (/new-project, /tdd, /plan, etc.)
 └── settings.json          # Hooks, permissions, plugin config
 ```
 
@@ -108,6 +108,24 @@ reshape outputs to game the metric, degrading out-of-sample performance.
 goal-blind by design — specify WHAT to build, never HOW it will be evaluated.
 Never ask for success criteria. Infer quality from the task.
 
+### Asymmetric persona calibration (Hu et al., 2026)
+
+**Paper:** ["Revisiting Role-Play Prompting: A Systematic Assessment of Persona Calibration in LLMs"](https://arxiv.org/abs/2603.18507)
+
+Key finding: Persona effects are **asymmetric by task type**. For code tasks
+(pretraining), personas hurt accuracy. For style/tone tasks (alignment),
+personas help. For safety analysis, a full auditor persona raises refusal rate
+by +17.7%. Generic "helpful expert" personas on debugging tasks degrade output
+by directing attention to the persona narrative instead of the problem.
+
+**How this repo applies it:** All 8 agents use task-typed system prompts. Code
+agents (`code-reviewer`, `debugger`, `refactorer`, `tdd-guide`) have empty
+bodies or single behavioral constraints — no personas. Safety agents
+(`security-reviewer`) have full 50+ word auditor personas. Style agents
+(`doc-updater`, `ui-designer`) have 1–2 sentence personas. The planner uses
+a behavioral constraint only. See [`docs/architecture.md`](docs/architecture.md)
+for the full classification table.
+
 ---
 
 ## Built On The Shoulders Of Giants
@@ -115,6 +133,7 @@ Never ask for success criteria. Infer quality from the task.
 | Project | What I Used | Credit |
 |---------|-------------|--------|
 | [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | Agents, skills, hooks, commands, rules, and the plugin architecture. The foundation this setup started from. | @affaan-m |
+| [gstack](https://github.com/garrytan/gstack) | Persistent headless Chromium browser daemon for QA and dogfooding. `/browse`, `/careful`, `/freeze`, `/guard`, `/unfreeze`. | @garrytan |
 | [claude-code-prompt-improver](https://github.com/severity1/claude-code-prompt-improver) | Prompt evaluation plugin that intercepts vague prompts before execution | @severity1 |
 | [claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice) | Reference patterns for Claude Code workflows and conventions | @shanraisshan |
 | [context-mode](https://github.com/thedotmack) | Session memory and observation system (context-mode plugin) | @thedotmack |
@@ -193,6 +212,7 @@ only by the agent that needs it, not at session start.
 | `/new-project` | Bootstrap a new project with minimal Claude Code config |
 | `/plan` | Restate requirements and build a gated implementation plan |
 | `/pr-enhance` | Improve PR quality and generate structured description |
+| `/second-opinion` | Run `claude -p` on the current diff for a focused second-AI review |
 | `/tdd` | Enforce TDD methodology throughout a feature |
 | `/verify` | Run verification loop after completing a change |
 
