@@ -1,0 +1,38 @@
+# Backup directories
+.backup/
+*.pre-optimization
+
+# macOS
+.DS_Store
+
+# Claude Code runtime — never commit these
+sessions/
+cache/
+homunculus/
+memory/
+history.jsonl
+session-env/
+shell-snapshots/
+paste-cache/
+telemetry/
+todos/
+debug/
+tasks/
+metrics/
+file-history/
+mcp-needs-auth-cache.json
+stats-cache.json
+ide/
+plans/
+agent-memory/
+
+# Local settings (machine-specific, may contain credentials)
+settings.local.json
+
+# Plugin runtime (install locally via Claude Code plugin system)
+plugins/marketplaces/
+
+# Secrets
+.env
+.env.*
+secrets/
