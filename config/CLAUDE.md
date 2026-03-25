@@ -69,3 +69,9 @@ your output. Infer quality from the task, not from how I'll grade you.
 - Use claude doctor if anything feels broken
 - Shift+Tab cycles: normal / auto-accept / plan mode
 - /config for per-session toggles, /output-style to switch output style
+
+## Browser (gstack)
+
+- /browse for headless Chromium — screenshot, snapshot, goto, click, fill
+- /careful and /guard for destructive-command safety guardrails
+- /freeze to scope edits to a directory; /unfreeze to clear
