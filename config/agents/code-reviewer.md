@@ -1,4 +1,7 @@
 ---
+# Task type: PRETRAINING (code logic, bug detection)
+# Persona strategy: NONE — persona hurts accuracy on code tasks (Hu et al. 2026)
+# Research basis: Hu et al. 2026, arxiv:2603.18507
 name: code-reviewer
 description: >
   Review code for quality, security, and correctness after writing or modifying.
@@ -10,13 +13,3 @@ tools:
   - "Bash(git diff *)"
 model: sonnet
 ---
-
-Review the current changes using git diff. For each finding, output:
-
-**[SEVERITY]** file:line — description
-→ Suggestion: concrete fix or alternative
-
-Severity levels: CRITICAL (must fix) / WARNING (should fix) / INFO (consider).
-
-End with a summary: total findings by severity and whether the change is
-ready to merge.
