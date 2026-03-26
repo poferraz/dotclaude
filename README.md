@@ -99,7 +99,7 @@ style guides the model could infer from the codebase.
 
 ### Goal-blind prompting (Cao, Jiang, Xu, 2026)
 
-**Paper:** "Seeing the Goal, Missing the Truth"
+**Paper:** ["Seeing the Goal, Missing the Truth"](https://arxiv.org/abs/2602.09504)
 
 Key finding: Telling an LLM how its output will be evaluated causes it to
 reshape outputs to game the metric, degrading out-of-sample performance.
@@ -110,7 +110,7 @@ Never ask for success criteria. Infer quality from the task.
 
 ### Instruction hierarchy failure and recency bias (Geng et al., 2025)
 
-**Paper:** "Control Illusion: Understanding and Addressing LLM Instruction Hierarchy Failure" (arxiv: 2502.15851)
+**Paper:** ["Control Illusion: Understanding and Addressing LLM Instruction Hierarchy Failure"](https://arxiv.org/abs/2502.15851)
 
 Key findings:
 - LLM instruction obedience drops to **9.6%** under cross-tier conflict
@@ -124,7 +124,7 @@ The recency anchor outperforms "NON-NEGOTIABLE" labels placed mid-document.
 
 ### LLM agent code smells and NSO mitigation (Mahmoudi et al., 2025)
 
-**Paper:** "LLM Code Smells in Agentic Systems" (arxiv: 2512.18020)
+**Paper:** ["LLM Code Smells in Agentic Systems"](https://arxiv.org/abs/2512.18020)
 
 Key findings:
 - **40.5%** of agent system failures are caused by Non-Specific Output (NSO)
