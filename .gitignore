@@ -1,3 +1,6 @@
+# Local research / design assets — never push
+assets/
+
 # Backup directories
 .backup/
 *.pre-optimization
