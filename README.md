@@ -1,7 +1,7 @@
 # dotclaude
 
 <p align="center">
-  <img src="images/header.jpg" alt="dotclaude — You Need This" width="600">
+  <img src="images/header.jpg" alt="dotclaude — You Need This" width="500">
 </p>
 
 **A research-backed global environment for Claude Code**
