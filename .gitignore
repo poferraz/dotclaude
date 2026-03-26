@@ -1,6 +1,3 @@
-# Local research / design assets — never push
-assets/
-
 # Backup directories
 .backup/
 *.pre-optimization
@@ -46,3 +43,4 @@ secrets/
 *.p8
 credentials*.json
 service-account*.json
+.gstack/
