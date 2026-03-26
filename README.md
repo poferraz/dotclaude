@@ -14,7 +14,7 @@
 A curated `~/.claude/` configuration that combines the best open-source tools
 from the Claude Code ecosystem into a single coherent setup. The key insight
 behind this design: **most context files hurt performance** — they flood the
-model's attention with boilerplate before a single line of your code is seen.
+model's attention with boilerplate before a single line of your code is seen. (Thibaud Gloaguen, Niels Mündler, Mark Müller, Veselin Raychev, Martin Vechev)
 This setup is ruthlessly minimal. Every file, agent, and skill must earn its
 tokens or it doesn't ship.
 
@@ -22,11 +22,11 @@ tokens or it doesn't ship.
 
 ## Why This Exists
 
-Coding agents perform measurably worse with bloated context files. When the
+Coding agents perform measurably worse with bloated context files. (Thibaud Gloaguen, Niels Mündler, Mark Müller, Veselin Raychev, Martin Vechev) When the
 context window fills with generic instructions, framework boilerplate, and
 catch-all rules, the model's attention is diluted before it ever sees your
-actual problem. Research now confirms what practitioners suspected: more
-context is not better context.
+actual problem. (Thibaud Gloaguen, Niels Mündler, Mark Müller, Veselin Raychev, Martin Vechev) Research now confirms what practitioners suspected: more
+context is not better context. (Thibaud Gloaguen, Niels Mündler, Mark Müller, Veselin Raychev, Martin Vechev)
 
 Most "awesome Claude Code" setups operate in the opposite direction — they add
 everything. Mega-agents with 20 tools. Skills with 500 lines of generic advice.
@@ -88,70 +88,61 @@ claude doctor
 
 ## The Research Behind It
 
-### Context files can hurt you (Gloaguen et al., 2026)
+### Context files can hurt you (Thibaud Gloaguen, Niels Mündler, Mark Müller, Veselin Raychev, Martin Vechev, 2026)
 
-**Paper:** ["Evaluating AGENTS.md: Are Repository-Level Context Files Helpful?"](https://arxiv.org/abs/2602.11988)
+**Paper:** ["Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents?"](https://arxiv.org/abs/2602.11988)
 
 Key findings:
-- LLM-generated context files **reduced task success in 5 of 8 settings**
-- Increased API cost by **20–23%**
-- Increased reasoning tokens by **14–22%**
-- Human-written files performed better, but only when they contained
-  *non-obvious* requirements the agent couldn't discover itself
+- Context files tend to **reduce task success rates compared to providing no repository context**
+- Increased inference cost by **over 20%**
+- Human-written context files should describe **only minimal requirements to be effective**
 
 **How this repo applies it:** `CLAUDE.md` is under 30 lines and contains only
 behavioral principles that override default model behavior. No framework
 boilerplate. No re-teaching what the model already knows. No comprehensive
 style guides the model could infer from the codebase.
 
-### Goal-blind prompting (Cao, Jiang, Xu, 2026)
+### Goal-blind prompting (Sean Cao, Wei Jiang, Hui Xu, 2026)
 
-**Paper:** ["Seeing the Goal, Missing the Truth"](https://arxiv.org/abs/2602.09504)
+**Paper:** ["Seeing the Goal, Missing the Truth: Human Accountability for AI Bias"](https://arxiv.org/abs/2602.09504)
 
-Key finding: Telling an LLM how its output will be evaluated causes it to
-reshape outputs to game the metric, degrading out-of-sample performance.
+Key finding: Goal-aware prompting shifts intermediate measures toward the disclosed downstream objective, and provides no advantage post-cutoff.
 
 **How this repo applies it:** The prompting philosophy in `CLAUDE.md` is
 goal-blind by design — specify WHAT to build, never HOW it will be evaluated.
 Never ask for success criteria. Infer quality from the task.
 
-### Instruction hierarchy failure and recency bias (Geng et al., 2025)
+### Instruction hierarchy failure and recency bias (Yilin Geng, Haonan Li, Honglin Mu, Xudong Han, Timothy Baldwin, Omri Abend, Eduard Hovy, Lea Frermann, 2025)
 
-**Paper:** ["Control Illusion: Understanding and Addressing LLM Instruction Hierarchy Failure"](https://arxiv.org/abs/2502.15851)
+**Paper:** ["Control Illusion: The Failure of Instruction Hierarchies in Large Language Models"](https://arxiv.org/abs/2502.15851)
 
 Key findings:
 - LLM instruction obedience drops to **9.6%** under cross-tier conflict
-- **Recency bias** is the strongest compliance driver — position in context
-  matters more than explicit priority markers
-- Critical rules placed at the END of context yield highest compliance
+- Models are significantly more likely to follow the instruction that appears last in the prompt, regardless of its assigned priority or role. Position in context matters more than explicit priority markers.
+- Critical rules placed at the end of the prompt yield the highest compliance.
 
 **How this repo applies it:** `CLAUDE.md` uses XML blocks (`<final_constraints>`)
 with non-negotiable rules positioned at the **absolute bottom** of the file.
 The recency anchor outperforms "NON-NEGOTIABLE" labels placed mid-document.
 
-### LLM agent code smells and NSO mitigation (Mahmoudi et al., 2025)
+### LLM agent code smells and NSO mitigation (Brahim Mahmoudi et al., 2025)
 
-**Paper:** ["LLM Code Smells in Agentic Systems"](https://arxiv.org/abs/2512.18020)
+**Paper:** ["Specification and Detection of LLM Code Smells"](https://arxiv.org/abs/2512.18020)
 
 Key findings:
-- **40.5%** of agent system failures are caused by Non-Specific Output (NSO)
-- NSO = agent returns free-form prose where a structured schema was expected
-- XML tag wrapping significantly reduces NSO failure rates for Claude
+- **60.50%** of them contained at least one of these code smells.
+- No Structured Output (NSO): Relying on raw text parsing instead of using structured formats
 
 **How this repo applies it:** Every skill in `~/.claude/skills/` includes a
 "Strict Output Schema" section with mandatory XML tags. Agents that invoke
 these skills must wrap their outputs — free-form prose is treated as a bug,
 not a style choice.
 
-### Asymmetric persona calibration (Hu et al., 2026)
+### Asymmetric persona calibration (Zizhao Hu, Mohammad Rostami, and Jesse Thomason, 2026)
 
-**Paper:** ["Revisiting Role-Play Prompting: A Systematic Assessment of Persona Calibration in LLMs"](https://arxiv.org/abs/2603.18507)
+**Paper:** ["Expert Personas Improve LLM Alignment but Damage Accuracy: Bootstrapping Intent-Based Persona Routing with PRISM"](https://arxiv.org/abs/2603.18507)
 
-Key finding: Persona effects are **asymmetric by task type**. For code tasks
-(pretraining), personas hurt accuracy. For style/tone tasks (alignment),
-personas help. For safety analysis, a full auditor persona raises refusal rate
-by +17.7%. Generic "helpful expert" personas on debugging tasks degrade output
-by directing attention to the persona narrative instead of the problem.
+Key finding: Task Dependency: Generative/Alignment Tasks vs. Discriminative/Logic Tasks. Discriminative/Logic Tasks: Personas are detrimental to math, coding, and factual retrieval. Generative/Alignment Tasks: Personas are beneficial for creative writing, roleplay, and safety. The model focuses more on acting like an expert than actually being accurate.
 
 **How this repo applies it:** All 8 agents use task-typed system prompts. Code
 agents (`code-reviewer`, `debugger`, `refactorer`, `tdd-guide`) have empty
@@ -167,13 +158,13 @@ for the full classification table.
 
 | Project | What I Used | Credit |
 |---------|-------------|--------|
-| [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | Agents, skills, hooks, commands, rules, and the plugin architecture. The foundation this setup started from. | @affaan-m |
-| [gstack](https://github.com/garrytan/gstack) | Persistent headless Chromium browser daemon for QA and dogfooding. `/browse`, `/careful`, `/freeze`, `/guard`, `/unfreeze`. | @garrytan |
-| [claude-code-prompt-improver](https://github.com/severity1/claude-code-prompt-improver) | Prompt evaluation plugin that intercepts vague prompts before execution | @severity1 |
-| [claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice) | Reference patterns for Claude Code workflows and conventions | @shanraisshan |
-| [context-mode](https://github.com/thedotmack) | Session memory and observation system (context-mode plugin) | @thedotmack |
-| [beads](https://github.com/steveyegge/beads) | Structured task tracking for coding agents. Recommended as the on-demand memory layer. | @steveyegge |
-| [stop-slop](https://github.com/hardikpandya/stop-slop) | Writing quality patterns adapted for skill output | @hardikpandya |
+| [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | The agent harness performance optimization system. Skills, instincts, memory, security, and research-first development for Claude Code, Codex, Opencode, Cursor and beyond. | @affaan-m |
+| [gstack](https://github.com/garrytan/gstack) | Use Garry Tan's exact Claude Code setup: 15 opinionated tools that serve as CEO, Designer, Eng Manager, Release Manager, Doc Engineer, and QA | @garrytan |
+| [claude-code-prompt-improver](https://github.com/severity1/claude-code-prompt-improver) | Intelligent prompt improver hook for Claude Code. Type vibes, ship precision. | @severity1 |
+| [claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice) | practice made claude perfect | @shanraisshan |
+| [claude-mem](https://github.com/thedotmack) | claude-mem: A Claude Code plugin that captures session data, compresses it with AI, and injects relevant context back into future sessions. | @thedotmack |
+| [beads](https://github.com/steveyegge/beads) | Beads - A memory upgrade for your coding agent | @steveyegge |
+| [stop-slop](https://github.com/hardikpandya/stop-slop) | A skill file for removing AI tells from prose | @hardikpandya |
 | [AGENTS.md spec](https://agents.md) | The open standard for guiding coding agents | AGENTS.md community |
 | [Anthropic Claude Code docs](https://docs.anthropic.com/en/docs/claude-code) | Official documentation for CLAUDE.md, hooks, agents, skills, commands | Anthropic |
 
