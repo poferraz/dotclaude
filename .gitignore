@@ -1,3 +1,6 @@
+# Local research / design assets — never push
+assets/
+
 # Backup directories
 .backup/
 *.pre-optimization
@@ -32,7 +35,14 @@ settings.local.json
 # Plugin runtime (install locally via Claude Code plugin system)
 plugins/marketplaces/
 
-# Secrets
+# Secrets and credentials
 .env
 .env.*
 secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.p8
+credentials*.json
+service-account*.json
