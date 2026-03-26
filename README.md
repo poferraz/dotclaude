@@ -2,6 +2,7 @@
 
 **A research-backed global environment for Claude Code**
 
+[![Website](https://img.shields.io/badge/Website-dotclaude--setup.vercel.app-000000?logo=vercel)](https://dotclaude-setup.vercel.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-2.1.0%2B-blue)](https://claude.ai/code)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -55,9 +56,11 @@ via bash. Skills are knowledge, not code: they load context, not behavior.
 
 ## Quick Start
 
+> **Guided setup:** [dotclaude-setup.vercel.app](https://dotclaude-setup.vercel.app/) walks you through installation interactively.
+
 ```bash
 # 1. Clone
-git clone https://github.com/yourusername/dotclaude.git
+git clone https://github.com/poferraz/dotclaude.git
 cd dotclaude
 
 # 2. Run the install script
