@@ -1,5 +1,9 @@
 # dotclaude
 
+<p align="center">
+  <img src="assets/header.jpg" alt="dotclaude — You Need This" width="600">
+</p>
+
 **A research-backed global environment for Claude Code**
 
 [![Website](https://img.shields.io/badge/Website-dotclaude--setup.vercel.app-000000?logo=vercel)](https://dotclaude-setup.vercel.app/)
