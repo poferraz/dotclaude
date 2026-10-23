@@ -32,7 +32,6 @@
       "Bash(ls *)",
       "Bash(mkdir *)",
       "Bash(cp *)",
-      "Bash(chmod *)",
 
       // Allow fetching raw GitHub content for plugin installs
       "WebFetch(domain:raw.githubusercontent.com)"
