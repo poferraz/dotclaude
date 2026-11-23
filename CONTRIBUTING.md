@@ -1,66 +1,7 @@
-# Contributing to dotclaude
+# Contributing
 
-Thank you for your interest. This is a minimal-by-design configuration — the
-bar for adding new content is intentionally high.
+Explain which task your change helps, when the instructions will load and what already exists in the host or repository. A proposed change to the global `CLAUDE.md` affects every project that uses the profile. Include the estimated context impact requested by the pull request template and use an example to show why the change belongs there.
 
-## The Standard
+Keep agent instructions, commands and skill references in their matching [configuration directories](config/). Credit upstream work and preserve its license notice. When citing research, identify the task and population the paper actually studied. [Sources and credits](MANIFEST.md) · [Research notes](docs/research-notes.md)
 
-Before proposing new context, agents, or skills, ask yourself one question:
-**Can Claude figure this out on its own?**
-
-If yes — from its training, from reading the codebase, or from the existing
-config — don't add it. The research this repo is built on (Gloaguen et al.,
-2026) shows that redundant context actively hurts performance. We are not
-trying to teach Claude to code. We are providing the small set of behavioral
-overrides and workflow tools it cannot infer.
-
-Every PR that adds tokens to auto-loading files (CLAUDE.md, rules, agent
-system prompts) must include a justification with estimated token cost and a
-clear answer to why this cannot be inferred.
-
-## What We're Looking For
-
-**Good:**
-- A leaner replacement for an existing agent or skill with evidence it performs better
-- A research update that changes what should or shouldn't be in CLAUDE.md
-- A bug fix (broken hook, incorrect tool permission, wrong model assignment)
-- Attribution correction or addition
-
-**Not a fit:**
-- Generic agents that could apply to anything (use everything-claude-code instead)
-- Skills that duplicate upstream repos
-- Commands that would be better as a one-line shell alias
-- Style opinions without evidence
-
-## How to Contribute
-
-1. Fork the repo
-2. Create a branch: `git checkout -b type/short-description`
-3. Make your changes
-4. Open a PR using the PR template — the Token Impact section is required
-
-## Commit Format
-
-Conventional commits are required:
-
-```
-feat: add X agent for Y purpose
-fix: correct tool permission for Z
-docs: update attribution for W
-chore: update .gitignore
-refactor: simplify planner system prompt
-```
-
-Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`
-
-## Issue Templates
-
-Use the provided templates in `.github/ISSUE_TEMPLATE/`:
-
-- **Bug report** — something is broken or behaving unexpectedly
-- **Feature request** — a new agent, skill, or command you want to propose
-- **Research update** — new research that should inform this setup
-
-## Code of Conduct
-
-Be direct and specific. Back claims with evidence. Attribute your sources.
+For installer or export changes, exercise the script in a disposable directory. Check what it creates and what it preserves when the target already contains files. Include the command and observed result in the pull request. Use fictional fixtures for private paths, settings and transcripts. [Pull request template](.github/PULL_REQUEST_TEMPLATE.md) · [Security reports](SECURITY.md)

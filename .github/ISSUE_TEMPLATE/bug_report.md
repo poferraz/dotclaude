@@ -28,9 +28,7 @@ assignees: ''
 
 ## Error output
 
-```
-paste any error messages here
-```
+Use a short, redacted excerpt with fictional paths and values. Keep profile files, credentials and session logs out of public issues.
 
 ## Additional context
 
