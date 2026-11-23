@@ -162,7 +162,12 @@ fs.renameSync = (from, to) => {
 """)
         self.command("uninstall", "y\n", success=False, NODE_OPTIONS="--require=" + str(shim))
         self.assertFalse(self.profile.exists())
-        self.assertEqual((self.snapshots("recovery")[0] / "config/personal").read_text(), "changed after installation")
+        saved = self.snapshots("recovery")[0] / "config/personal"
+        self.assertEqual(saved.read_text(), "changed after installation")
+        saved.write_text("wrong contents")
+        self.command("install", success=False)
+        self.assertFalse(self.profile.exists())
+        saved.write_text("changed after installation")
         self.command("install")
         self.assertEqual(note.read_text(), "changed after installation")
         self.assertFalse((self.root / "test profile.dotclaude-restore").exists())

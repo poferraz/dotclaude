@@ -62,6 +62,18 @@ function saveManifest(directory, checksum) {
   fs.writeFileSync(path.join(directory, 'manifest.json'), JSON.stringify({ version: 1, sha256: checksum }), { mode: 0o600 });
 }
 
+function checkManifest(directory, checksum) {
+  const file = path.join(directory, 'manifest.json');
+  if (!stat(file)?.isFile()) throw new Error('Backup manifest is missing or invalid.');
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    throw new Error('Backup manifest could not be read.');
+  }
+  if (manifest?.version !== 1 || manifest.sha256 !== checksum) throw new Error('Backup contents do not match the saved checksum.');
+}
+
 function install(target, work) {
   const additions = [];
   function inspect(relative, input) {
@@ -110,6 +122,11 @@ function install(target, work) {
 
   // Prepare complete files on the same filesystem, then add them exclusively.
   // Existing live files retain their inodes, hard links, ACLs and extended attributes.
+  const physical = path.join(fs.realpathSync(path.dirname(target)), path.basename(target));
+  function parentIsUnchanged(output) {
+    const parent = path.dirname(output);
+    return fs.realpathSync(parent) === path.resolve(physical, path.relative(target, parent));
+  }
   const published = [];
   try {
     for (const [index, change] of additions.entries()) {
@@ -120,18 +137,21 @@ function install(target, work) {
       }
     }
     for (const change of additions) {
+      if (!parentIsUnchanged(change.output)) throw new Error('A managed directory changed during installation.');
       if (change.copy) fs.linkSync(change.copy, change.output);
       else fs.mkdirSync(change.output, { mode: 0o700 });
+      change.inode = fs.lstatSync(change.output).ino;
       published.push(change);
     }
   } catch (error) {
     for (const change of published.reverse()) {
+      const info = stat(change.output);
+      if (!info || !parentIsUnchanged(change.output) || info.ino !== change.inode) continue;
       if (change.copy) {
-        const info = stat(change.output);
-        if (info?.isFile() && info.ino === fs.statSync(change.copy).ino &&
+        if (info.isFile() &&
             fingerprint(change.output) === change.checksum) fs.unlinkSync(change.output);
       } else {
-        if (stat(change.output)?.isDirectory() && !fs.readdirSync(change.output).length) fs.rmdirSync(change.output);
+        if (info.isDirectory() && !fs.readdirSync(change.output).length) fs.rmdirSync(change.output);
       }
     }
     throw error;
@@ -154,6 +174,7 @@ function recoverPending(target) {
     if (!stat(directory)?.isDirectory()) throw new Error('Invalid interrupted restore directory.');
     const recovery = path.join(directory, 'config');
     if (!stat(recovery)?.isDirectory()) throw new Error('Expected recovery configuration at ' + recovery);
+    checkManifest(directory, fingerprint(recovery));
     fs.renameSync(recovery, target);
     console.log('Recovered the previous configuration after an interrupted restore.');
   }
@@ -226,15 +247,7 @@ async function restore(target, staged, currentHash) {
     if (!stat(input)?.isDirectory()) throw new Error('Backup configuration is missing or invalid.');
     const original = fingerprint(input);
     if (!legacy) {
-      const manifestPath = path.join(selected, 'manifest.json');
-      if (!stat(manifestPath)?.isFile()) throw new Error('Backup manifest is missing or invalid.');
-      let manifest;
-      try {
-        manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-      } catch {
-        throw new Error('Backup manifest could not be read.');
-      }
-      if (manifest?.version !== 1 || manifest.sha256 !== original) throw new Error('Backup contents do not match the saved checksum.');
+      checkManifest(selected, original);
     }
     copyTree(input, staged);
     if (fingerprint(staged) !== original) throw new Error('Backup could not be copied faithfully. Current configuration preserved.');
