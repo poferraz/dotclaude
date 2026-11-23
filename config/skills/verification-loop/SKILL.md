@@ -16,74 +16,16 @@ Invoke this skill:
 - When you want to ensure quality gates pass
 - After refactoring
 
-## Verification Phases
+## Verification phases
 
-### Phase 1: Build Verification
-```bash
-# Check if project builds
-npm run build 2>&1 | tail -20
-# OR
-pnpm build 2>&1 | tail -20
-```
+1. **Build.** Read the repository's scripts and run its documented build. Keep its actual exit status.
+2. **Types.** Run the existing type-check command where the project provides one.
+3. **Lint.** Run the configured linter. Distinguish warnings from errors.
+4. **Tests.** Run the relevant suite. Report its observed test count and any coverage actually measured.
+5. **Security.** Use a trusted local redacting scanner for the requested files or history. Keep keys, raw matched lines and private contents out of logs. Report only the category and location. If scanning is unavailable, mark it unverified.
+6. **Diff.** Review changed paths for unexpected changes, sensitive material and missed error handling. Compare the tested state with the state proposed for a commit.
 
-If build fails, STOP and fix before continuing.
-
-### Phase 2: Type Check
-```bash
-# TypeScript projects
-npx tsc --noEmit 2>&1 | head -30
-
-# Python projects
-pyright . 2>&1 | head -30
-```
-
-Report all type errors. Fix critical ones before continuing.
-
-### Phase 3: Lint Check
-```bash
-# JavaScript/TypeScript
-npm run lint 2>&1 | head -30
-
-# Python
-ruff check . 2>&1 | head -30
-```
-
-### Phase 4: Test Suite
-```bash
-# Run tests with coverage
-npm run test -- --coverage 2>&1 | tail -50
-
-# Check coverage threshold
-# Target: 80% minimum
-```
-
-Report:
-- Total tests: X
-- Passed: X
-- Failed: X
-- Coverage: X%
-
-### Phase 5: Security Scan
-```bash
-# Check for secrets
-grep -rn "sk-" --include="*.ts" --include="*.js" . 2>/dev/null | head -10
-grep -rn "api_key" --include="*.ts" --include="*.js" . 2>/dev/null | head -10
-
-# Check for console.log
-grep -rn "console.log" --include="*.ts" --include="*.tsx" src/ 2>/dev/null | head -10
-```
-
-### Phase 6: Diff Review
-```bash
-# Show what changed
-git diff --stat
-git diff HEAD~1 --name-only
-```
-
-Review each changed file for:
-- Unintended changes
-- Missing error handling
-- Potential edge cases
+Mark unavailable or irrelevant checks explicitly. A passing build supports the build claim only. Avoid automatically downloading tools or packages to fill a missing check.
 
 ## Output Format
 
@@ -123,7 +65,7 @@ Run: /verify
 ## Integration with Hooks
 
 This skill complements PostToolUse hooks but provides deeper verification.
-Hooks catch issues immediately; this skill provides comprehensive review.
+Run these checks explicitly. Any additional hooks require separate configuration.
 
 ## Strict Output Schema
 

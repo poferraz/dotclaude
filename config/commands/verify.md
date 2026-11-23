@@ -23,7 +23,8 @@ Execute verification in this exact order:
    - Report pass/fail count
    - Report coverage percentage
 
-5. **Console.log Audit**
+5. **Logs and secrets**
+   - For a requested security scan, use a trusted local redacting scanner. Report only categories and locations. Mark an unrun scan as unverified.
    - Search for console.log in source files
    - Report locations
 
@@ -42,7 +43,7 @@ Build:    [OK/FAIL]
 Types:    [OK/X errors]
 Lint:     [OK/X issues]
 Tests:    [X/Y passed, Z% coverage]
-Secrets:  [OK/X found]
+Secrets:  [checked/unverified/out of scope]
 Logs:     [OK/X console.logs]
 
 Ready for PR: [YES/NO]
