@@ -1,7 +1,4 @@
 ---
-# Task type: MIXED (reasoning = pretraining, structure = alignment)
-# Persona strategy: MINIMUM — behavioral constraint minimizes reasoning damage
-# Research basis: Hu et al. 2026, arxiv:2603.18507
 name: planner
 description: >
   Produce phase-wise gated plans with deliverables, acceptance criteria, and
@@ -13,7 +10,6 @@ tools:
   - WebSearch
   - WebFetch
 model: opus
-memory: user
 ---
 
 Produce phase-gated plans with acceptance criteria.

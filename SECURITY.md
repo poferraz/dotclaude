@@ -1,51 +1,13 @@
-# Security Policy
+# Security and privacy
 
-## What This Repo Contains
+## Report a vulnerability
 
-This repository contains Claude Code configuration files only:
-- Agent and skill definitions (markdown)
-- Slash command definitions (markdown)
-- Settings schema (`settings.json` template)
-- MCP server configuration template (`mcp.json`)
+Send a private report to the maintainer through GitHub. Include the affected revision, the relevant configuration file and a synthetic example. Keep credentials, full configuration directories and private transcripts out of public issues. [Report privately](https://github.com/poferraz/dotclaude/security/advisories/new)
 
-**It does not contain:**
-- API keys or tokens of any kind
-- Personal data
-- Credentials or secrets
-- Machine-specific absolute paths (the settings template uses env vars)
+## What installation changes
 
-## The Install Script
+The installer copies files into the chosen Claude Code profile. It leaves existing user files in place and prints backup locations. Installation and recovery operate on local files. Claude Code and any plugins you enable have their own data handling and permissions. [Installer](scripts/install.sh) · [Recovery guide](docs/customization.md)
 
-The install script (`install.sh`) copies files locally and installs plugins via
-the Claude Code plugin marketplace system. It does not transmit data to any
-third-party service. It does not make network requests beyond standard Claude
-Code plugin installation.
+The optional settings example requires a manual merge. Review its rules and the effective settings in your host. A user's existing hooks, plugins and project configuration may have effects beyond this collection. A Markdown instruction directs a model's behavior. Tool permissions and host settings control what the model can access.
 
-## Credential Handling
-
-All credentials referenced in `mcp.json` are environment variable references:
-
-```json
-"GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-```
-
-Never store real credentials in config files. Always use environment variables.
-The `.gitignore` excludes `settings.local.json` (where per-machine credentials
-or overrides live) and `.env` files.
-
-## Reporting a Vulnerability
-
-If you find a security issue in this configuration — a hook that could be
-exploited, a permission that's too broad, or a pattern that creates risk —
-please open a GitHub issue tagged `security`.
-
-For sensitive reports, use GitHub's private vulnerability reporting feature.
-
-We aim to respond within 48 hours.
-
-## Supported Versions
-
-| Version | Supported |
-|---------|-----------|
-| 1.x     | ✅ Yes     |
-| < 1.0   | ❌ No      |
+The directory you back up or restore can contain logs, credentials, project paths and private settings. Keep copies in private storage and inspect their contents before sharing anything. For ordinary bug reports, use a short example with fictional paths and values.

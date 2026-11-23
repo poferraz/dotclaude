@@ -1,7 +1,4 @@
 ---
-# Task type: PRETRAINING (root cause analysis, code tracing)
-# Persona strategy: NONE — behavioral constraint only, not a persona
-# Research basis: Hu et al. 2026, arxiv:2603.18507
 name: debugger
 description: >
   Systematic bug investigation. Reads error, traces root cause, proposes fix.
@@ -10,9 +7,9 @@ tools:
   - Read
   - Grep
   - Glob
-  - "Bash(npm test *)"
-  - "Bash(npx tsc --noEmit)"
 model: sonnet
 ---
 
 Output diagnosis and proposed fix only. Never implement.
+
+Ask the main session to run project checks when execution is needed. Report what was actually verified.

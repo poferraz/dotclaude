@@ -1,274 +1,37 @@
 # dotclaude
 
-<p align="center">
-  <img src="images/header.jpg" alt="dotclaude — You Need This" width="500">
-</p>
+<img src="images/header.jpg" alt="dotclaude cover artwork" width="360">
 
-**A research-backed global environment for Claude Code**
+dotclaude is a collection of instructions for Claude Code. It gives you a planner, a debugger and review commands that you can call by name. For example, use `/plan` in a project to break down a change and review the proposed steps before editing.
 
-[![Website](https://img.shields.io/badge/Website-dotclaude--setup.vercel.app-000000?logo=vercel)](https://dotclaude-setup.vercel.app/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-2.1.0%2B-blue)](https://claude.ai/code)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+## Install
 
-A curated `~/.claude/` configuration that combines the best open-source tools
-from the Claude Code ecosystem into a single coherent setup. The key insight
-behind this design: **most context files hurt performance** — they flood the
-model's attention with boilerplate before a single line of your code is seen. (Thibaud Gloaguen, Niels Mündler, Mark Müller, Veselin Raychev, Martin Vechev)
-This setup is ruthlessly minimal. Every file, agent, and skill must earn its
-tokens or it doesn't ship.
+Use macOS or Linux with Git, Node.js 18 or later and Claude Code 2.1 or later. Clone the repository and review the files you intend to use. To install the collection into your Claude Code configuration, run the installer from the checkout.
 
----
-
-## Why This Exists
-
-Coding agents perform measurably worse with bloated context files. (Thibaud Gloaguen, Niels Mündler, Mark Müller, Veselin Raychev, Martin Vechev) When the
-context window fills with generic instructions, framework boilerplate, and
-catch-all rules, the model's attention is diluted before it ever sees your
-actual problem. (Thibaud Gloaguen, Niels Mündler, Mark Müller, Veselin Raychev, Martin Vechev) Research now confirms what practitioners suspected: more
-context is not better context. (Thibaud Gloaguen, Niels Mündler, Mark Müller, Veselin Raychev, Martin Vechev)
-
-Most "awesome Claude Code" setups operate in the opposite direction — they add
-everything. Mega-agents with 20 tools. Skills with 500 lines of generic advice.
-Commands for every conceivable workflow. The result is a system that impresses
-in screenshots and degrades in daily use.
-
-This configuration was born from real work: retail management tooling, PWA
-development, bakery production planning. Not theoretical best practices. It was
-audited, stripped down, rebuilt leaner, and audited again. The agents you see
-here survived because they provably helped. The ones that didn't are gone.
-
----
-
-## What's Inside
-
-```
-~/.claude/
-├── CLAUDE.md              # Global context (under 30 lines, research-optimized)
-├── agents/                # 8 single-purpose agents with 1-sentence instructions
-├── skills/                # 6 skills + gstack browser (5 on-demand, 1 agent-preloaded)
-├── commands/              # 15 slash commands (/new-project, /tdd, /plan, etc.)
-└── settings.json          # Hooks, permissions, plugin config
-```
-
-**Command → Agent → Skill.** A command (`/plan`) launches a scoped subagent
-(`planner`) that optionally loads a knowledge pack (`tdd-workflow`) via its
-`skills:` frontmatter. Agents invoke other agents via the Agent tool — never
-via bash. Skills are knowledge, not code: they load context, not behavior.
-
----
-
-## Quick Start
-
-> **Guided setup:** [dotclaude-setup.vercel.app](https://dotclaude-setup.vercel.app/) walks you through installation interactively.
-
-```bash
-# 1. Clone
+```sh
 git clone https://github.com/poferraz/dotclaude.git
 cd dotclaude
-
-# 2. Run the install script
-#    (backs up your existing ~/.claude/ automatically)
-bash scripts/install.sh
-
-# 3. Merge settings manually
-#    Review config/settings.json and add hook/plugin config to ~/.claude/settings.json
-#    (the script will tell you exactly what to do)
-
-# 4. Verify
-claude --version
-claude doctor
+sh scripts/install.sh
 ```
 
-> The install script backs up your existing `~/.claude/` before touching anything,
-> copies config files, and prints next steps for plugin installation.
-> It does not transmit any data. See [SECURITY.md](SECURITY.md).
+The installer adds missing files and preserves files that already exist at the same paths. By default it uses `~/.claude`. To try it in a separate directory, set `CLAUDE_CONFIG_DIR` to an absolute path when running the installer. The optional settings example requires a manual merge. Review it alongside your current permissions and plugins before applying any changes. [Settings example](config/settings.json) · [Installation and recovery](docs/customization.md)
 
----
+Open a new Claude Code session in your project. Try `/plan Add a print button to the monthly report`, then review the plan and decide whether to proceed.
 
-## The Research Behind It
+## My role and what changed
 
-### Context files can hurt you (Thibaud Gloaguen, Niels Mündler, Mark Müller, Veselin Raychev, Martin Vechev, 2026)
+I selected and combined the agents, skills and commands, using AI tools to help develop the configuration. The planner asks for approval before implementation. Its instructions are separate from the testing guide, which the test-driven-development agent loads when needed. [Planner](config/agents/planner.md) · [Test agent](config/agents/tdd-guide.md)
 
-**Paper:** ["Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents?"](https://arxiv.org/abs/2602.11988)
+An earlier settings example approved `chmod` commands too broadly. The project removed that permission. Reviewing the research citations also led to narrower claims about what the studies actually tested. [Permission correction](https://github.com/poferraz/dotclaude/commit/712beeda72bf29511532d112e5b11e90e7da6b4d) · [Citation correction](https://github.com/poferraz/dotclaude/commit/72b04ee34b2ef5cfd7ad6a5943865b01ace58e40)
 
-Key findings:
-- Context files tend to **reduce task success rates compared to providing no repository context**
-- Increased inference cost by **over 20%**
-- Human-written context files should describe **only minimal requirements to be effective**
+## Repository guide
 
-**How this repo applies it:** `CLAUDE.md` is under 30 lines and contains only
-behavioral principles that override default model behavior. No framework
-boilerplate. No re-teaching what the model already knows. No comprehensive
-style guides the model could infer from the codebase.
+| Where | What you will find |
+| --- | --- |
+| [Global instructions](config/CLAUDE.md) | Preferences shared across projects using this profile |
+| [Agents](config/agents/), [commands](config/commands/) and [skills](config/skills/) | The Markdown instructions Claude Code uses for individual tasks |
+| [Scripts](scripts/) | Local installation, backup restoration and export of the shared instructions for four other tools |
+| [Sources and credits](MANIFEST.md) | Which material was adapted and who created it |
+| [Research](docs/research-notes.md) | The papers that influenced the design and the limits of their findings |
 
-### Goal-blind prompting (Sean Cao, Wei Jiang, Hui Xu, 2026)
-
-**Paper:** ["Seeing the Goal, Missing the Truth: Human Accountability for AI Bias"](https://arxiv.org/abs/2602.09504)
-
-Key finding: Goal-aware prompting shifts intermediate measures toward the disclosed downstream objective, and provides no advantage post-cutoff.
-
-**How this repo applies it:** The prompting philosophy in `CLAUDE.md` is
-goal-blind by design — specify WHAT to build, never HOW it will be evaluated.
-Never ask for success criteria. Infer quality from the task.
-
-### Instruction hierarchy failure and recency bias (Yilin Geng, Haonan Li, Honglin Mu, Xudong Han, Timothy Baldwin, Omri Abend, Eduard Hovy, Lea Frermann, 2025)
-
-**Paper:** ["Control Illusion: The Failure of Instruction Hierarchies in Large Language Models"](https://arxiv.org/abs/2502.15851)
-
-Key findings:
-- LLM instruction obedience drops to **9.6%** under cross-tier conflict
-- Models are significantly more likely to follow the instruction that appears last in the prompt, regardless of its assigned priority or role. Position in context matters more than explicit priority markers.
-- Critical rules placed at the end of the prompt yield the highest compliance.
-
-**How this repo applies it:** `CLAUDE.md` uses XML blocks (`<final_constraints>`)
-with non-negotiable rules positioned at the **absolute bottom** of the file.
-The recency anchor outperforms "NON-NEGOTIABLE" labels placed mid-document.
-
-### LLM agent code smells and NSO mitigation (Brahim Mahmoudi et al., 2025)
-
-**Paper:** ["Specification and Detection of LLM Code Smells"](https://arxiv.org/abs/2512.18020)
-
-Key findings:
-- **60.50%** of them contained at least one of these code smells.
-- No Structured Output (NSO): Relying on raw text parsing instead of using structured formats
-
-**How this repo applies it:** Every skill in `~/.claude/skills/` includes a
-"Strict Output Schema" section with mandatory XML tags. Agents that invoke
-these skills must wrap their outputs — free-form prose is treated as a bug,
-not a style choice.
-
-### Asymmetric persona calibration (Zizhao Hu, Mohammad Rostami, and Jesse Thomason, 2026)
-
-**Paper:** ["Expert Personas Improve LLM Alignment but Damage Accuracy: Bootstrapping Intent-Based Persona Routing with PRISM"](https://arxiv.org/abs/2603.18507)
-
-Key finding: Task Dependency: Generative/Alignment Tasks vs. Discriminative/Logic Tasks. Discriminative/Logic Tasks: Personas are detrimental to math, coding, and factual retrieval. Generative/Alignment Tasks: Personas are beneficial for creative writing, roleplay, and safety. The model focuses more on acting like an expert than actually being accurate.
-
-**How this repo applies it:** All 8 agents use task-typed system prompts. Code
-agents (`code-reviewer`, `debugger`, `refactorer`, `tdd-guide`) have empty
-bodies or single behavioral constraints — no personas. Safety agents
-(`security-reviewer`) have full 50+ word auditor personas. Style agents
-(`doc-updater`, `ui-designer`) have 1–2 sentence personas. The planner uses
-a behavioral constraint only. See [`docs/architecture.md`](docs/architecture.md)
-for the full classification table.
-
----
-
-## Built On The Shoulders Of Giants
-
-| Project | What I Used | Credit |
-|---------|-------------|--------|
-| [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | The agent harness performance optimization system. Skills, instincts, memory, security, and research-first development for Claude Code, Codex, Opencode, Cursor and beyond. | @affaan-m |
-| [gstack](https://github.com/garrytan/gstack) | Use Garry Tan's exact Claude Code setup: 15 opinionated tools that serve as CEO, Designer, Eng Manager, Release Manager, Doc Engineer, and QA | @garrytan |
-| [claude-code-prompt-improver](https://github.com/severity1/claude-code-prompt-improver) | Intelligent prompt improver hook for Claude Code. Type vibes, ship precision. | @severity1 |
-| [claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice) | practice made claude perfect | @shanraisshan |
-| [claude-mem](https://github.com/thedotmack) | claude-mem: A Claude Code plugin that captures session data, compresses it with AI, and injects relevant context back into future sessions. | @thedotmack |
-| [beads](https://github.com/steveyegge/beads) | Beads - A memory upgrade for your coding agent | @steveyegge |
-| [stop-slop](https://github.com/hardikpandya/stop-slop) | A skill file for removing AI tells from prose | @hardikpandya |
-| [AGENTS.md spec](https://agents.md) | The open standard for guiding coding agents | AGENTS.md community |
-| [Anthropic Claude Code docs](https://docs.anthropic.com/en/docs/claude-code) | Official documentation for CLAUDE.md, hooks, agents, skills, commands | Anthropic |
-
-This repository is an assembly, not an invention. Every tool, pattern, and
-architecture decision traces back to the work of the developers and researchers
-listed above. I built this by installing their tools, testing them on real
-projects, reading the research, and cutting everything that didn't earn its
-place. If you find this useful, **star THEIR repos first.**
-
----
-
-## Philosophy
-
-- **Every token in your context window should earn its place.** If a rule
-  describes behavior Claude would exhibit anyway from training, delete it.
-- **Trust the model's training — don't re-teach it what it already knows.**
-  A 30-line CLAUDE.md that overrides defaults beats a 300-line one that
-  restates them.
-- **On-demand over auto-loaded, always.** Skills and context that load only
-  when invoked don't cost tokens on unrelated tasks.
-
----
-
-## Agents
-
-| Agent | Purpose | Model |
-|-------|---------|-------|
-| `code-reviewer` | Review changes via `git diff` — SOLID, security, YAGNI violations | sonnet |
-| `debugger` | Trace bugs to root cause and propose minimal fix. Never implements. | sonnet |
-| `doc-updater` | Sync documentation after public API or interface changes | sonnet |
-| `planner` | Phase-wise gated plans with deliverables and acceptance criteria | opus |
-| `refactorer` | Structural cleanup without behavior change. Requires tests before and after. | sonnet |
-| `security-reviewer` | Injection, auth gaps, secrets exposure, data validation | sonnet |
-| `tdd-guide` | Enforce RED→GREEN→IMPROVE. Report coverage delta each cycle. | sonnet |
-| `ui-designer` | 2026-style React/Tailwind components with preloaded design system | sonnet |
-
-All agents: single responsibility, scoped tool list, one-sentence system prompt.
-The planner uses Opus because planning quality compounds across the entire task.
-
----
-
-## Skills
-
-| Skill | Purpose | Loading |
-|-------|---------|---------|
-| `coding-standards` | Language-agnostic quality rules: naming, structure, error handling, immutability | On-demand |
-| `continuous-learning-v2` | Instinct-based learning from session patterns | On-demand |
-| `strategic-compact` | Context compaction triggers at logical session intervals | On-demand |
-| `tdd-workflow` | TDD methodology reference loaded by the `tdd-guide` agent | **Agent-preloaded** |
-| `ui-ux-pro-max` | 67 styles, 96 palettes, 57 font pairings — loaded by `ui-designer` | On-demand |
-| `verification-loop` | Systematic verification checklist after multi-step changes | On-demand |
-
-5 of 6 skills are on-demand by design. Only `tdd-workflow` is preloaded — and
-only by the agent that needs it, not at session start.
-
----
-
-## Commands
-
-| Command | Purpose |
-|---------|---------|
-| `/audit-repo` | Full GitHub repository audit |
-| `/build-fix` | Triage and resolve build errors |
-| `/checkpoint` | Save session state before risky operations |
-| `/code-review` | Trigger the `code-reviewer` agent on current changes |
-| `/evolve` | Analyze learned instincts and suggest refinements |
-| `/full-review` | Multi-agent comprehensive review (code + security + docs) |
-| `/full-stack-feature` | Orchestrate end-to-end feature implementation |
-| `/instinct-status` | Show learned patterns with confidence scores |
-| `/learn` | Extract reusable patterns from the current session |
-| `/new-project` | Bootstrap a new project with minimal Claude Code config |
-| `/plan` | Restate requirements and build a gated implementation plan |
-| `/pr-enhance` | Improve PR quality and generate structured description |
-| `/second-opinion` | Run `claude -p` on the current diff for a focused second-AI review |
-| `/tdd` | Enforce TDD methodology throughout a feature |
-| `/verify` | Run verification loop after completing a change |
-
----
-
-## Customization
-
-**Different stack?** Copy any agent to your project's `.claude/agents/` and
-update the Bash tool rules. The `debugger` defaults to `npm test` — change it
-to `pytest *`, `go test ./...`, or whatever your runner is.
-
-**Project-level CLAUDE.md?** The `/new-project` command generates one — 5 to
-10 lines maximum. The research (Gloaguen et al.) shows that comprehensive
-guides don't help. Only include what the agent cannot discover from the code.
-
-**Want fewer agents?** Start with `planner`, `debugger`, and `code-reviewer`.
-Add others only when you notice a recurring gap.
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-The bar for adding new content is high by design: it must contain non-obvious
-information that Claude cannot discover from its training or existing repo
-files. Generic advice doesn't clear the bar. Evidence does.
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE)
+[Security and privacy](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [MIT license](LICENSE)

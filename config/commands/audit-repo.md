@@ -8,6 +8,8 @@ Code.
 
 ## Important context
 
+Keep findings in the current conversation unless the user authorizes a separate destination. Use local evidence and never send repository contents to an external reviewer without approval.
+
 The user running this audit may be new to Git and GitHub. Do not assume
 familiarity with concepts like rebasing, force pushing, or branch protection
 rules. When a finding requires explanation, provide it inline. When a fix
@@ -20,7 +22,7 @@ Before running any checks, establish these facts:
 
 1. **Repo location**: Ask for the local path if not provided. Confirm it
    exists and contains a `.git` directory.
-2. **Remote status**: Run `git remote -v`. Determine if the repo has been
+2. **Remote status**: Run `git remote`. Determine if the repo has been
    pushed to GitHub yet. This distinction matters because some fixes (like
    removing secrets from history) are straightforward before first push but
    require force-pushing after, which rewrites history for anyone who cloned.
@@ -156,67 +158,11 @@ missing, and what PASS/FAIL looks like for each.
 This is the highest-consequence section. A single leaked API key in a public
 repo can be exploited within minutes by automated scanners.
 
-### 1.1 Scan tracked files for secrets
+### 1.1 Screen tracked files and history
 
-**What to look for**: API keys, tokens, passwords, private keys, connection
-strings, .env file contents, OAuth secrets, webhook URLs with tokens.
+Use a trusted local secret scanner in redacted, offline mode. For example, if Gitleaks is already installed, run `gitleaks git --redact --no-banner --log-level=error --log-opts=--all .` and check its exit status. Record the repository revision and refs covered. Screen staged-only and newly tracked files separately when those are part of the requested scope.
 
-**Command (rg available)**:
-```bash
-rg -i --no-heading -n \
-  '(api[_-]?key|api[_-]?secret|access[_-]?token|auth[_-]?token|secret[_-]?key|password|passwd|private[_-]?key|client[_-]?secret|webhook.*secret|Bearer\s+[A-Za-z0-9\-._~+/]+=*|ghp_[A-Za-z0-9]{36}|sk-[A-Za-z0-9]{48}|AKIA[A-Z0-9]{16})' \
-  --glob '!.git' .
-```
-
-**Command (grep fallback)**:
-```bash
-grep -rn -i \
-  -e 'api[_-]*key' -e 'api[_-]*secret' -e 'access[_-]*token' \
-  -e 'auth[_-]*token' -e 'secret[_-]*key' -e 'password' \
-  -e 'private[_-]*key' -e 'client[_-]*secret' \
-  -e 'ghp_[A-Za-z0-9]' -e 'sk-[A-Za-z0-9]' -e 'AKIA[A-Z0-9]' \
-  --exclude-dir=.git .
-```
-
-**Interpreting results**: Not every match is a real secret. Common false
-positives include: placeholder values like `YOUR_API_KEY_HERE`, environment
-variable references like `process.env.API_KEY`, documentation examples, and
-template bracket placeholders like `[your-key]`. For each match, determine
-whether it contains an actual credential value or just a reference/placeholder.
-
-**PASS**: Zero matches, or all matches are confirmed false positives.
-**FAIL**: Any match containing what appears to be a real credential value.
-
-### 1.2 Scan git history for secrets
-
-Files can be removed from the current tree but still exist in git history.
-Anyone who clones the repo gets the full history, including deleted secrets.
-
-**Command**:
-```bash
-git log --all --diff-filter=D --name-only --pretty=format:"%H %s" | head -100
-```
-This shows deleted files. Then check if any look like credential files
-(.env, .pem, .key, credentials.json, etc.).
-
-**Deeper scan (if available)**:
-```bash
-# trufflehog (best option)
-trufflehog git file://. --only-verified
-
-# git-secrets (alternative)
-git secrets --scan-history
-```
-
-**Fallback (no specialized tools)**:
-```bash
-git log -p --all -S 'password' --no-textconv -- . ':!.git' | head -200
-git log -p --all -S 'api_key' --no-textconv -- . ':!.git' | head -200
-git log -p --all -S 'secret' --no-textconv -- . ':!.git' | head -200
-```
-
-**PASS**: No credentials found in history.
-**FAIL**: Any credential found in any historical commit.
+Report only the finding category, location and remediation. Never paste matched values, secret files, private keys or raw history patches into a report or prompt. Never validate a suspected credential against its provider. If no suitable scanner is available, mark the check as requiring manual verification.
 
 ### 1.3 Check for credential files in tree
 
@@ -327,57 +273,10 @@ git ls-files -ci --exclude-standard
 
 ## 3. SENSITIVE PATH EXPOSURE
 
-### 3.1 Hardcoded local paths
+### 3.1 Local paths, addresses and internal infrastructure
 
-**Command**:
-```bash
-rg --no-heading -n '(/Users/|/home/|C:\\Users\\|/Documents/|/Desktop/)' \
-  --glob '!.git' . 2>/dev/null || \
-grep -rn -e '/Users/' -e '/home/' -e 'C:\\Users\\' \
-  -e '/Documents/' -e '/Desktop/' --exclude-dir=.git .
-```
+Screen tracked files privately for machine-specific paths, personal emails and internal hosts. Use filename-only or redacted output. Report the affected file and issue category. Distinguish intentional public contacts, synthetic examples and loopback development settings from actual private details.
 
-**Interpreting**: Paths in documentation telling users where to clone are
-fine. Paths that reference the repo author's specific machine layout are a
-leak.
-
-**PASS**: No author-specific local paths found.
-**FAIL**: Any path containing the repo author's username or machine-specific
-directory structure.
-
-### 3.2 Email addresses
-
-**Command**:
-```bash
-rg --no-heading -n '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' \
-  --glob '!.git' --glob '!LICENSE' . 2>/dev/null || \
-grep -rn -E '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' \
-  --exclude-dir=.git --exclude=LICENSE .
-```
-
-**Interpreting**: Email in a LICENSE file or SECURITY.md contact section is
-intentional. Email in source code, config files, or comments is usually
-unintentional.
-
-**PASS**: No unintentional email exposure.
-**FAIL**: Email found in source code or config files.
-
-### 3.3 Internal hostnames and IPs
-
-**Command**:
-```bash
-rg --no-heading -n '(localhost:[0-9]{4,5}|192\.168\.|10\.[0-9]+\.|172\.(1[6-9]|2[0-9]|3[01])\.)' \
-  --glob '!.git' . 2>/dev/null || \
-grep -rn -E '(localhost:[0-9]{4,5}|192\.168\.|10\.[0-9]+\.)' \
-  --exclude-dir=.git .
-```
-
-**Interpreting**: localhost references in development config are normal but
-should be in .env or .env.example, not hardcoded. Private IPs indicate
-internal infrastructure exposure.
-
-**PASS**: No internal network references in committed code.
-**FAIL**: Internal IPs or hostnames found outside of example/template files.
 
 ---
 
@@ -422,16 +321,9 @@ Added new feature         (no type, past tense instead of imperative)
 **PASS**: All commits follow Conventional Commits format.
 **FAIL**: Any commit deviates. Note which specific commits fail and why.
 
-### 4.2 Consistent author identity
+### 4.2 Public author identity
 
-**Command**:
-```bash
-git log --format="%an <%ae>" | sort -u
-```
-
-**PASS**: One consistent author name and email across all commits.
-**FAIL**: Multiple author identities (often caused by different git configs
-on different machines, or committing from GitHub web UI vs. local terminal).
+Check whether recent commit headers use the intended public or no-reply identity. Report counts and corrective settings without showing private addresses. Changing the identity for future commits leaves existing history intact.
 
 ### 4.3 Atomic commits
 
@@ -636,7 +528,7 @@ test -d .venv && echo "FAIL: .venv committed" || echo "PASS"
 
 ## 9. GITHUB SETTINGS (post-push only)
 
-Skip this entire section if `git remote -v` shows no remote or the repo has
+Skip this entire section if `git remote` shows no remote or the repo has
 never been pushed (no upstream tracking). These settings can only be verified
 through the GitHub API or web interface.
 

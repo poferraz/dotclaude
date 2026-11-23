@@ -10,10 +10,10 @@ argument-hint: "<feature description> [--stack react/fastapi/postgres] [--api-st
 You MUST follow these rules exactly. Violating any of them is a failure.
 
 1. **Execute steps in order.** Do NOT skip ahead, reorder, or merge steps.
-2. **Write output files.** Each step MUST produce its output file in `.full-stack-feature/` before the next step begins. Read from prior step files -- do NOT rely on context window memory.
+2. **Keep working notes private.** Keep the phase notes in this conversation by default. All `.full-stack-feature/` paths below describe optional session artifacts. Use files only if the user requests saved notes and selects a private directory outside the repository. In that case resolve all paths under that directory.
 3. **Stop at checkpoints.** When you reach a `PHASE CHECKPOINT`, you MUST stop and wait for explicit user approval before continuing. Use the AskUserQuestion tool with clear options.
 4. **Halt on failure.** If any step fails (agent error, test failure, missing dependency), STOP immediately. Present the error and ask the user how to proceed. Do NOT silently continue.
-5. **Use only local agents.** All `subagent_type` references use agents bundled with this plugin or `general-purpose`. No cross-plugin dependencies.
+5. **Use available capabilities.** The agent role names below describe tasks. Check which agents the host actually provides. When a role is unavailable, handle that step in the current session with its existing permissions.
 6. **Never enter plan mode autonomously.** Do NOT use EnterPlanMode. This command IS the plan -- execute it.
 
 ## Pre-flight Checks
@@ -22,7 +22,7 @@ Before starting, perform these checks:
 
 ### 1. Check for existing session
 
-Check if `.full-stack-feature/state.json` exists:
+If the user requested private session files, check their selected directory for the state file:
 
 - If it exists and `status` is `"in_progress"`: Read it, display the current step, and ask the user:
 
@@ -39,7 +39,7 @@ Check if `.full-stack-feature/state.json` exists:
 
 ### 2. Initialize state
 
-Create `.full-stack-feature/` directory and `state.json`:
+Track the following state in the conversation by default. If the user approved private file output, create `state.json` in their selected directory. Treat all later file reads and writes as references to these in-conversation notes unless that permission was given:
 
 ```json
 {

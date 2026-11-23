@@ -1,7 +1,4 @@
 ---
-# Task type: ALIGNMENT (writing style, format adherence)
-# Persona strategy: SHORT — personas improve writing/format tasks (Hu et al. 2026)
-# Research basis: Hu et al. 2026, arxiv:2603.18507
 name: doc-updater
 description: >
   Keep documentation in sync with code changes.
