@@ -47,3 +47,6 @@ secrets/
 credentials*.json
 service-account*.json
 .gstack/
+
+# Python regression checks
+__pycache__/
