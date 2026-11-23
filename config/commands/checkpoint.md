@@ -1,74 +1,22 @@
-# Checkpoint Command
+# Checkpoint
 
-Create or verify a checkpoint in your workflow.
+Use `/checkpoint create`, `verify`, `list` or `clear` with an optional name or exact Git reference.
 
-## Usage
+## Create
 
-`/checkpoint [create|verify|list] [name]`
+Inspect the branch and changed paths using `git status --short --branch`. Avoid printing file contents. If the working tree is clean, report the existing commit from `git rev-parse --verify HEAD`.
 
-## Create Checkpoint
+For a dirty tree, explain which files the checkpoint would include. Ask the user to select a commit or a stash and approve the scope. A commit records its approved changes in the branch. A stash removes its selected changes from the working tree until restored. Leave private, ignored and unrelated files alone.
 
-When creating a checkpoint:
+- For a commit, verify exactly what is staged before committing. Report the new commit ID from `git rev-parse --verify HEAD`.
+- For a stash, read the current stash ID if one exists, make the approved stash, then read `git rev-parse --verify 'refs/stash^{commit}'`. Report the resulting stash ID only if it changed. If Git saved nothing, say so.
 
-1. Run `/verify quick` to ensure current state is clean
-2. Create a git stash or commit with checkpoint name
-3. Log checkpoint to `.claude/checkpoints.log`:
+Keep the checkpoint type, name and exact ID in the conversation. Save a separate record only if the user requests and approves a private destination.
 
-```bash
-echo "$(date +%Y-%m-%d-%H:%M) | $CHECKPOINT_NAME | $(git rev-parse --short HEAD)" >> .claude/checkpoints.log
-```
+## Verify and list
 
-4. Report checkpoint created
+For `verify`, resolve the selected record to its exact Git object. Compare the intended paths with the working tree and run the relevant checks. Report observed results and any unavailable comparison. If a name is ambiguous, ask for the exact ID.
 
-## Verify Checkpoint
+For `list`, report checkpoints identified in the conversation. If the user wants existing Git stashes, list their references and IDs. Git does not distinguish ordinary commits from named checkpoints on its own.
 
-When verifying against a checkpoint:
-
-1. Read checkpoint from log
-2. Compare current state to checkpoint:
-   - Files added since checkpoint
-   - Files modified since checkpoint
-   - Test pass rate now vs then
-   - Coverage now vs then
-
-3. Report:
-```
-CHECKPOINT COMPARISON: $NAME
-============================
-Files changed: X
-Tests: +Y passed / -Z failed
-Coverage: +X% / -Y%
-Build: [PASS/FAIL]
-```
-
-## List Checkpoints
-
-Show all checkpoints with:
-- Name
-- Timestamp
-- Git SHA
-- Status (current, behind, ahead)
-
-## Workflow
-
-Typical checkpoint flow:
-
-```
-[Start] --> /checkpoint create "feature-start"
-   |
-[Implement] --> /checkpoint create "core-done"
-   |
-[Test] --> /checkpoint verify "core-done"
-   |
-[Refactor] --> /checkpoint create "refactor-done"
-   |
-[PR] --> /checkpoint verify "feature-start"
-```
-
-## Arguments
-
-$ARGUMENTS:
-- `create <name>` - Create named checkpoint
-- `verify <name>` - Verify against named checkpoint
-- `list` - Show all checkpoints
-- `clear` - Remove old checkpoints (keeps last 5)
+For `clear`, remove conversational labels only. Dropping a saved stash needs separate approval for that exact stash ID. Recheck the selected reference immediately before any deletion.

@@ -39,7 +39,7 @@ If the user requested private session files, check their selected directory for 
 
 ### 2. Initialize state
 
-Create `.full-stack-feature/` directory and `state.json`:
+Track the following state in the conversation by default. If the user approved private file output, create `state.json` in their selected directory. Treat all later file reads and writes as references to these in-conversation notes unless that permission was given:
 
 ```json
 {

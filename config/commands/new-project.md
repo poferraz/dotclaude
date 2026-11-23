@@ -41,61 +41,9 @@ Create `.claude/settings.json` with minimal project-level config:
 }
 ```
 
-## Step 2b: Generate TDD Agent Override (Go and Python only)
+## Step 2b: Identify the project test command
 
-If the stack from Step 1 is **Go** or **Python**, create `.claude/agents/tdd-guide.md`
-to override the global npm-only tdd-guide with the correct test runners:
-
-**For Go projects** — create `.claude/agents/tdd-guide.md`:
-```markdown
----
-name: tdd-guide
-description: >
-  Enforce TDD methodology throughout implementation.
-  Use when writing new features or fixing bugs.
-tools:
-  - Read
-  - "Bash(go test ./...)"
-  - "Bash(go test -cover ./...)"
-  - "Bash(go test -run *)"
-model: sonnet
----
-
-# TDD Guide (Go)
-
-Follow strict red-green-refactor:
-1. Write a failing table-driven test first
-2. Run `go test ./...` — confirm it fails
-3. Write minimal implementation to pass
-4. Run `go test -cover ./...` — verify coverage ≥ 80%
-5. Refactor, keeping tests green
-```
-
-**For Python projects** — create `.claude/agents/tdd-guide.md`:
-```markdown
----
-name: tdd-guide
-description: >
-  Enforce TDD methodology throughout implementation.
-  Use when writing new features or fixing bugs.
-tools:
-  - Read
-  - "Bash(python -m pytest *)"
-  - "Bash(python -m pytest --cov *)"
-model: sonnet
----
-
-# TDD Guide (Python)
-
-Follow strict red-green-refactor:
-1. Write a failing pytest test first
-2. Run `python -m pytest` — confirm it fails
-3. Write minimal implementation to pass
-4. Run `python -m pytest --cov` — verify coverage ≥ 80%
-5. Refactor, keeping tests green
-```
-
-Skip this step for all other stacks (TypeScript, etc.) — the global tdd-guide covers them.
+Look for a test command in the project’s scripts, CI or contributor guide. Record that command in the project instructions. For a new project, ask which test runner the user expects before describing it as available. The bundled TDD guide provides read-only guidance across stacks. The main session runs authorized checks with its existing permissions.
 
 ## Step 3: Create Project-Level CLAUDE.md
 
